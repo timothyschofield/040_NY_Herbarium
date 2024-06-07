@@ -74,7 +74,7 @@ def make_payload(model, prompt, url_request, num_tokens):
         "content": [
           {
             "type": "text",
-            "temperature": "0.05",
+            "temperature": "0.0",
             "text": prompt
           },
           {
