@@ -165,7 +165,7 @@ for df_name, prompt_name in ocr_column_names:
 
 keys_concatenated = ", ".join(prompt_key_names) # For the prompt
 
-
+# Basically works
 prompt = (
   f"Read this hebarium sheet and extract all the text you can"
   f"The hebarium sheet may sometimes use Spanish, French or German"
@@ -175,11 +175,33 @@ prompt = (
 )
 
 
-
-
-
-
-
+prompt = (
+  f"Read this herbarium sheet and extract all the text you can"
+  f"The herbarium sheet may sometimes use Spanish, French or German"
+  f"Go through the text you have extracted and return data in JSON format with {keys_concatenated} as keys"
+  f"Use exactly {keys_concatenated} as keys"
+  
+  f"Return the text you have extracted in the field 'OCR Text'"
+  
+  f"Collection Team should contain other people involved in collecting the specimen"
+  
+  f"The 'Collection Date To' and 'Collection Date From' should have the format YYYY-MM-DD"
+  f"If there is only one data then fill in 'Collection Date To' and 'Collection Date From' with the same value"
+  
+  f"If no Continent is mentioned then infer it from the Country"
+  f"If no Country is mentioned then infer it from the Province, County or Locality"
+  
+  f"If no Latitude or Longitude information is available then infer it as accurately as possible from the Locality Description, County, Province or Country"
+  f"If Latitude and Longitude have been inferred, fill in the 'Coordinate Uncertainty In Meters' with an estimate of the accuracy"
+  
+  f"If a single elevation or altitude is mentioned fill in both the 'Minimum Elevation (Meters)' and 'Maximum Elevation (Meters)' with the same value"
+  f"If there is elevation information in Meters then do a conversion to feet and store the conversion in 'Minimum Elevation (Feet)' and 'Maximum Elevation (Feet)'"
+  
+  f"For 'Plant Frequency' look for words like Abundant, Occasional, Common, Frequent or Rare" 
+  f"For 'Plant Substrate' look for what the plant grows on e.g. on rotting log, on damp rock, on bark"
+  
+  f"If you can not find a value for a key return value 'none'"
+)
 
 
 batch_size = 20 # saves every
@@ -205,7 +227,7 @@ output_list = []
 count = 0
 try:
   print("####################################### START OUTPUT ######################################")
-  for image_path in image_path_list[:3]:
+  for image_path in image_path_list[:60]:
     
     print(f"\n########################## OCR OUTPUT {image_path} ##########################")
     count+=1
