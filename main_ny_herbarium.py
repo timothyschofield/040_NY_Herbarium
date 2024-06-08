@@ -165,16 +165,22 @@ for df_name, prompt_name in ocr_column_names:
 
 keys_concatenated = ", ".join(prompt_key_names) # For the prompt
 
-#print(df_column_names)
-#print(keys_concatenated)
 
 prompt = (
   f"Read this hebarium sheet and extract all the text you can"
-  f"The hebarium sheet may sometimes use Spanish or French"
+  f"The hebarium sheet may sometimes use Spanish, French or German"
   f"Go through the text you have extracted and return data in JSON format with {keys_concatenated} as keys"
-  f"Return the OCR text verbatim in the field 'OCR Text'"
+  f"Return the text you have extracted in the field 'OCR Text'"
   f"If you can not find a value for a key return value 'none'"
 )
+
+
+
+
+
+
+
+
 
 batch_size = 20 # saves every
 time_stamp = get_file_timestamp()
@@ -242,7 +248,6 @@ try:
       # HERE I DEAL WITH SOME FORMATS THAT CREATE INVALID JSON
       # 1) Turn to raw with "r" to avoid the escaping quotes problem
       json_returned = fr'{json_returned}'
-      print(f"content****{json_returned}****")
       
       # 2) Sometimes null still gets returned, even though I asked it not to
       if "null" in json_returned: 
@@ -255,7 +260,9 @@ try:
       json_returned = json_returned[open_brace_index:]
       close_brace_index = json_returned.rfind("}")
       json_returned = json_returned[:close_brace_index+1]
-
+      
+      print(f"content****{json_returned}****")
+      
       if is_json(json_returned):
         dict_returned = eval(json_returned) # JSON -> Dict
 
