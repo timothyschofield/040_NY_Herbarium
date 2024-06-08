@@ -99,9 +99,9 @@ import time
 from datetime import datetime
 import json
 
-from url_ny_sweetgum_1000 import URL_PATH_LIST
+from url_transcribed_ny_sweetgum import URL_PATH_LIST
 
-MODEL = "gpt-4o"            # Context window of 128k max_tokens 4096
+MODEL = "gpt-4o" # Context window of 128k max_tokens 4096
 
 load_dotenv()
 
@@ -154,12 +154,36 @@ ocr_column_names = [
         ("SpeOtherSpecimenNumbers_tab","SpeOtherSpecimenNumbers_tab"), 
         ("OcrText", "OCR Text")]
 
+
+df_column_names = []          # To make the DataFrame with
+prompt_key_names = []         # To use in the prompt for ChatGPT
+empty_output_dict = dict([])  # Useful when you have an error but still need to return a whole DataFrame row
+for df_name, prompt_name in ocr_column_names:
+  df_column_names.append(df_name)     
+  prompt_key_names.append(prompt_name)   
+  empty_output_dict[df_name] = "none"
+
+keys_concatenated = ", ".join(prompt_key_names) # For the prompt
+
+#print(df_column_names)
+#print(keys_concatenated)
+
+prompt = (
+  f"Read this hebarium sheet and extract all the text you can see"
+  f"The hebarium sheet may sometimes use Spanish of French"
+  f"Go through the text you have extracted and return data in JSON format with {keys_concatenated} as keys"
+  f"You are going to return all of this text in a JSON field called 'OCR Text'"
+  f"If you find no value for a key do not return 'null', return 'none'"
+)
+
+
+
 batch_size = 20 # saves every
 time_stamp = get_file_timestamp()
 
 input_folder = "ny_hebarium_input"
 output_folder = "ny_hebarium_output"
-project_name = "NY"
+project_name = "ny_hebarium"
 
 source_type = "url" # url or offline
 if source_type == "url":
@@ -175,21 +199,72 @@ headers = {
 
 output_list = []
 count = 0
-print("####################################### START OUTPUT ######################################")
 try:
+  print("####################################### START OUTPUT ######################################")
+  for image_path in image_path_list[:3]:
+    
+    print(f"\n########################## OCR OUTPUT {image_path} ##########################")
+    count+=1
+    print(f"count: {count}")
+    
+    error_message = "OK"
+
+    if source_type == "url":
+      url_request = image_path
+    else:
+      base64_image = encode_image(image_path)
+      url_request = f"data:image/jpeg;base64,{base64_image}"
+
+    payload = make_payload(MODEL, prompt, url_request, 4096)
+
+    num_tries = 3
+    for i in range(num_tries):
+        ocr_output = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)    
+
+        response_code = ocr_output.status_code
+        if response_code != 200:
+          print(f"======= 200 not returned {response_code} Trying request again number {i} ===========================")
+        else:
+          break
+    ###### eo try requests three times
+    # print(ocr_output.json())
+ 
+    if response_code != 200:
+        # Didn't even get to ChatGPT
+        print("RAW ocr_output ****", ocr_output.json(),"****")                   
+        dict_returned = eval(str(empty_output_dict))
+        dict_returned['OcrText'] = str(ocr_output.json())
+        error_message = "200 NOT returned from GPT"
+        print(error_message)
+    else:
+      # We got to ChatGPT
+      json_returned = ocr_output.json()['choices'][0]['message']['content']
+
+      # HERE I DEAL WITH SOME FORMATS THAT CREATE INVALID JSON
+      # 1) Turn to raw with "r" to avoid the escaping quotes problem
+      json_returned = fr'{json_returned}'
+      print(f"content****{json_returned}****")
+      
+      # 2) Sometimes null still gets returned, even though I asked it not to
+      if "null" in json_returned: 
+        json_returned = json_returned.replace("null", "'none'")
+      
+      # 3) Occasionaly the whole of the otherwise valid JSON is returned with surrounding square brackets like '[{"text":"tim"}]'
+      # or other odd things like markup '''json and ''' etc.
+      # This removes everything prior to the opening "{" and after the closeing "}"
+      open_brace_index = json_returned.find("{")
+      json_returned = json_returned[open_brace_index:]
+      close_brace_index = json_returned.rfind("}")
+      json_returned = json_returned[:close_brace_index+1]
+
+
+
+
+
+
+
+  print("####################################### END OUTPUT ######################################")
   
-  for image_path in image_path_list[:5]:
-    pass
-
-
-
-
-
-
-
-
-
-
 except openai.APIError as e:
   #Handle API error here, e.g. retry or log
   print(f"TIM: OpenAI API returned an API Error: {e}")
