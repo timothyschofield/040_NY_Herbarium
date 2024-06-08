@@ -169,14 +169,12 @@ keys_concatenated = ", ".join(prompt_key_names) # For the prompt
 #print(keys_concatenated)
 
 prompt = (
-  f"Read this hebarium sheet and extract all the text you can see"
-  f"The hebarium sheet may sometimes use Spanish of French"
+  f"Read this hebarium sheet and extract all the text you can"
+  f"The hebarium sheet may sometimes use Spanish or French"
   f"Go through the text you have extracted and return data in JSON format with {keys_concatenated} as keys"
-  f"You are going to return all of this text in a JSON field called 'OCR Text'"
-  f"If you find no value for a key do not return 'null', return 'none'"
+  f"Return the OCR text verbatim in the field 'OCR Text'"
+  f"If you can not find a value for a key return value 'none'"
 )
-
-
 
 batch_size = 20 # saves every
 time_stamp = get_file_timestamp()
@@ -208,7 +206,8 @@ try:
     print(f"count: {count}")
     
     error_message = "OK"
-
+    dict_returned = dict()
+    
     if source_type == "url":
       url_request = image_path
     else:
@@ -233,7 +232,7 @@ try:
         # Didn't even get to ChatGPT
         print("RAW ocr_output ****", ocr_output.json(),"****")                   
         dict_returned = eval(str(empty_output_dict))
-        dict_returned['OcrText'] = str(ocr_output.json())
+        dict_returned['OcrText'] = str(ocr_output.json())  # Not OCR Text - this is for the final output DataFrame
         error_message = "200 NOT returned from GPT"
         print(error_message)
     else:
@@ -257,11 +256,40 @@ try:
       close_brace_index = json_returned.rfind("}")
       json_returned = json_returned[:close_brace_index+1]
 
+      if is_json(json_returned):
+        dict_returned = eval(json_returned) # JSON -> Dict
 
+        # Now change all the key names from the human readable used in the prompt to DataFrame output names
+        # i.e. the same names as are in the NY spreadsheet
+        for df_name, prompt_name in ocr_column_names:
+          dict_returned[df_name] = dict_returned.pop(prompt_name)
+          
+      else:
+        dict_returned = eval(str(empty_output_dict))
+        dict_returned['OcrText'] = str(json_returned)
+        error_message = "JSON NOT RETURNED FROM GPT"
+        print(error_message)
+        
+    # Add columns that are involved in logging etc.
+    source_image_col = "URL"
+    error_col = "ERROR"
+    key_list_with_logging = [source_image_col, error_col] + df_column_names # This is the order that we would like the columns
+    dict_returned[source_image_col] = str(image_path)                       # Insert the image source file name into output
+    dict_returned[error_col] = str(error_message)                           # Insert error message into output
 
+    output_list.append(dict_returned) # Create list first, then turn into DataFrame
 
+    if count % batch_size == 0:
+      print(f"WRITING BATCH:{count}")
+      output_path_name = f"{output_folder}/{project_name}_{time_stamp}-{count}.csv"
+      create_and_save_dataframe(output_list=output_list, key_list_with_logging=key_list_with_logging, output_path_name=output_path_name)
 
-
+  #################################### eo for loop
+  
+  # For safe measure and during testing where batches are not batch_size
+  print(f"WRITING BATCH:{count}")
+  output_path_name = f"{output_folder}/{project_name}_{time_stamp}-{count}.csv"
+  create_and_save_dataframe(output_list=output_list, key_list_with_logging=key_list_with_logging, output_path_name=output_path_name)
 
   print("####################################### END OUTPUT ######################################")
   
