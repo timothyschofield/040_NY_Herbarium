@@ -1,4 +1,5 @@
 
+# Must be called after you know 200 has been returned
 def clean_up_ocr_output_json_content(ocr_output_in):
   
     json_returned = ocr_output_in.json()['choices'][0]['message']['content']
@@ -32,7 +33,6 @@ def print_all_chars(x):
     print(f"***{x[i]}*** {ord(x[i])}")
 
 
-
 import xml.etree.ElementTree as ET
 def validate_xml(xml_text):
     try:
@@ -41,13 +41,6 @@ def validate_xml(xml_text):
     except ET.ParseError as e:
         return False, f"XML is not well-formed: {e}"
 
-
-import base64
-# Function to base64 encode an image
-def encode_image(image_path):
-    with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
-    
 from datetime import datetime
 # e.g. 2024-05-18T06-53-26
 def get_file_timestamp():
@@ -95,8 +88,19 @@ def create_and_save_dataframe(output_list, key_list_with_logging, output_path_na
   with open(output_path, "w") as f:
     output_df.to_csv(f, index=False, encoding="utf-8", sep=",")
     
+import base64
+# Function to base64 encode an image
+def encode_image(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8') 
     
-def make_payload(model, prompt, url_request, num_tokens):
+def make_payload(model, prompt, source_type, image_path, num_tokens):
+  
+  if source_type == "url":
+    url_request = image_path
+  else:
+    base64_image = encode_image(image_path)
+    url_request = f"data:image/jpeg;base64,{base64_image}"
   
   payload = {
     "model": model,

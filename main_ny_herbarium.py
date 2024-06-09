@@ -237,13 +237,7 @@ try:
     error_message = "OK"
     dict_returned = dict()
     
-    if source_type == "url":
-      url_request = image_path
-    else:
-      base64_image = encode_image(image_path)
-      url_request = f"data:image/jpeg;base64,{base64_image}"
-
-    payload = make_payload(MODEL, prompt, url_request, 4096)
+    payload = make_payload(model=MODEL, prompt=prompt, source_type="url", image_path=image_path, num_tokens=4096)
 
     num_tries = 3
     for i in range(num_tries):
@@ -260,13 +254,24 @@ try:
             print(f"======= Returned JSON content not valid. Trying request again number {i} ===========================")
             print(f"INVALID JSON content****{json_returned}****")
           else:
+            # Have to check that the returned JSON keys have the correct name
+            # Sometimes ChatGPT just doesn't do as its told and changes the key names!
             break
           
     ###### eo try requests three times
     # print(ocr_output.json())
  
+    # OK - we've tried three time to get
+    # 1. 200 returned
+    # 2. valid JSON returned
+    # 3. valid key names
+    # Now if it all failed we still have to output a valid Dict line for the spreadsheet
+    # So here is where we deal with that
+ 
     if response_code != 200:
-        # Didn't even get to ChatGPT
+        # NOT 200
+        # Make a Dict line from the standard empty Dict and 
+        # Put the whole of the returned message in the OcrText field
         print("RAW ocr_output ****", ocr_output.json(),"****")                   
         dict_returned = eval(str(empty_output_dict))
         dict_returned['OcrText'] = str(ocr_output.json())  # Not OCR Text - this is for the final output DataFrame
@@ -277,14 +282,21 @@ try:
       print(f"content****{json_returned}****")
       
       if is_json(json_returned):
+        # VALID JSON
         dict_returned = eval(json_returned) # JSON -> Dict
 
         # Now change all the key names from the human readable used in the prompt to DataFrame output names
         # i.e. the same names as are in the NY spreadsheet
+        # Have to deal with the possibility of invalid keys here
+        
+        
         for df_name, prompt_name in ocr_column_names:
           dict_returned[df_name] = dict_returned.pop(prompt_name)
           
       else:
+        # INVALID JSON
+        # Make a Dict line from the standard empty Dict and 
+        # just put the invalid JSON in the OcrText field
         dict_returned = eval(str(empty_output_dict))
         dict_returned['OcrText'] = str(json_returned)
         error_message = "JSON NOT RETURNED FROM GPT"
