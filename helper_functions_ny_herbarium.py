@@ -1,4 +1,17 @@
 
+# Sometimes ChatGPT returns invalid keys in the JSON
+# The json_returned must be valid JSON
+def are_keys_valid(json_returned, prompt_key_names):
+  
+    dict_returned = eval(json_returned)
+    dict_returned_keys = list(dict_returned.keys())
+    if prompt_key_names == dict_returned_keys:
+        print("VALID returned JSON keys")
+        return True
+    else:
+        print("INVALID returned JSON keys")
+        return False
+      
 # Must be called after you know 200 has been returned
 def clean_up_ocr_output_json_content(ocr_output_in):
   

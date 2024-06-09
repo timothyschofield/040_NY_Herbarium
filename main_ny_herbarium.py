@@ -87,7 +87,7 @@ import openai
 from openai import OpenAI
 from dotenv import load_dotenv
 
-from helper_functions_ny_herbarium import encode_image, get_file_timestamp, is_json, create_and_save_dataframe, make_payload, clean_up_ocr_output_json_content
+from helper_functions_ny_herbarium import encode_image, get_file_timestamp, is_json, create_and_save_dataframe, make_payload, clean_up_ocr_output_json_content, are_keys_valid
 
 import requests
 import os
@@ -99,7 +99,8 @@ import time
 from datetime import datetime
 import json
 
-from url_transcribed_ny_sweetgum import URL_PATH_LIST
+# from url_transcribed_ny_sweetgum import URL_PATH_LIST
+from url_to_transcribe_ny_sweetgum_1000 import URL_PATH_LIST
 
 MODEL = "gpt-4o" # Context window of 128k max_tokens 4096
 
@@ -245,18 +246,27 @@ try:
             
             response_code = ocr_output.status_code
             if response_code != 200:
+                # NOT 200
                 print(f"======= 200 not returned {response_code}. Trying request again number {i} ===========================")
             else:
-                
+                # YES 200
                 json_returned = clean_up_ocr_output_json_content(ocr_output)
                 json_valid = is_json(json_returned)
                 if json_valid == False:
+                    # INVALID JSON
                     print(f"======= Returned JSON content not valid. Trying request again number {i} ===========================")
                     print(f"INVALID JSON content****{json_returned}****")
                 else:
-                    # Have to check that the returned JSON keys have the correct name
+                    # VALID JSON
+                    # Have to check that the returned JSON keys are correct 
                     # Sometimes ChatGPT just doesn't do as its told and changes the key names!
-                    break
+                    if are_keys_valid(json_returned, prompt_key_names) == False:
+                        # INVALID KEYS
+                        print(f"======= Returned JSON contains invalid keys. Trying request again number {i} ===========================")
+                    else:
+                        # VALID KEYS
+                        break
+                    
         ###### eo try requests three times
     
         # OK - we've tried three time to get
@@ -280,16 +290,21 @@ try:
         
             if is_json(json_returned):
                 # VALID JSON
-                dict_returned = eval(json_returned) # JSON -> Dict
-
-                # Now change all the key names from the human readable used in the prompt to DataFrame output names
-                # i.e. the same names as are in the NY spreadsheet
-                # Have to deal with the possibility of invalid keys here
                 
-                
-                for df_name, prompt_name in ocr_column_names:
-                    dict_returned[df_name] = dict_returned.pop(prompt_name)
-                
+                # Have to deal with the possibility of invalid keys returned in the valid JSON
+                if are_keys_valid(json_returned, prompt_key_names):
+                    # VALID KEYS
+                    # Now change all the key names from the human readable used in the prompt to DataFrame output names
+                    # to match the NY spreadsheet
+                    dict_returned = eval(json_returned) # JSON -> Dict
+                    for df_name, prompt_name in ocr_column_names:
+                        dict_returned[df_name] = dict_returned.pop(prompt_name)
+                else:
+                    # INVALID KEYS
+                    dict_returned = eval(str(empty_output_dict))
+                    dict_returned['OcrText'] = str(json_returned)                  
+                    error_message = "INVALID JSON KEYS RETURNED FROM GPT"
+                    print(error_message)
             else:
                 # INVALID JSON
                 # Make a Dict line from the standard empty Dict and 
@@ -299,7 +314,7 @@ try:
                 error_message = "JSON NOT RETURNED FROM GPT"
                 print(error_message)
             
-        # EO dealing with various types of returning code
+        # EO dealing with various types of returned code
         
         # Add columns that are involved in logging etc.
         source_image_col = "URL"
