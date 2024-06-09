@@ -87,7 +87,7 @@ import openai
 from openai import OpenAI
 from dotenv import load_dotenv
 
-from helper_functions_ny_herbarium import encode_image, get_file_timestamp, is_json, create_and_save_dataframe, make_payload
+from helper_functions_ny_herbarium import encode_image, get_file_timestamp, is_json, create_and_save_dataframe, make_payload, clean_up_ocr_output_json_content
 
 import requests
 import os
@@ -133,19 +133,19 @@ ocr_column_names = [
         ("Township_tab","Township_tab"), 
         ("Range_tab","Range_tab"), 
         ("Section_tab", "Section_tab"),
-        ("DarMinimumElevationMeters","Minimum Elevation (Meters)"), 
-        ("DarMaximumElevationMeters","Maximum Elevation (Meters)"), 
-        ("MinimumElevationFeet","Minimum Elevation (Feet)"), 
-        ("MaximumElevationFeet","Maximum Elevation (Feet)"),
+        ("DarMinimumElevationMeters","Minimum Elevation in Meters"), 
+        ("DarMaximumElevationMeters","Maximum Elevation in Meters"), 
+        ("MinimumElevationFeet","Minimum Elevation in Feet"), 
+        ("MaximumElevationFeet","Maximum Elevation in Feet"),
         ("DarLatitudeDecimal","Latitude Decimal"), 
         ("DarLongitudeDecimal","Longitude Decimal"), 
         ("LatitudeDMS","Latitude (Degrees Minutes Seconds)"), 
         ("LongitudeDMS","Longitude (Degrees Minutes Seconds)"), 
         ("DarGeodeticDatum","Geodetic Datum"), 
         ("DarGeorefMethod","Geo Reference Method"), 
-        ("DarCoordinateUncertaintyInMeter","Coordinate Uncertainty In Meters"), 
+        ("DarCoordinateUncertaintyInMeter","Coordinate Uncertainty in Meters"), 
         ("ColLocationNotes","Collection Location Notes"),
-        ("FeaCultivated? (Y/N)","Cultivated (Yes or No)"), 
+        ("FeaCultivated? (Y/N)","Cultivated"), 
         ("FeaPlantFungDescription","Plant Description"), 
         ("FeaFrequency","Plant Frequency"), 
         ("HabHabitat","Plant Habitat"), 
@@ -223,11 +223,12 @@ headers = {
   "Authorization": f"Bearer {my_api_key}"
 }
 
+
 output_list = []
 count = 0
 try:
   print("####################################### START OUTPUT ######################################")
-  for image_path in image_path_list[:4]:
+  for image_path in image_path_list[60:120]:
     
     print(f"\n########################## OCR OUTPUT {image_path} ##########################")
     count+=1
@@ -246,13 +247,21 @@ try:
 
     num_tries = 3
     for i in range(num_tries):
-        ocr_output = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)    
-
+        ocr_output = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload) 
+           
         response_code = ocr_output.status_code
         if response_code != 200:
-          print(f"======= 200 not returned {response_code} Trying request again number {i} ===========================")
+          print(f"======= 200 not returned {response_code}. Trying request again number {i} ===========================")
         else:
-          break
+          json_returned = clean_up_ocr_output_json_content(ocr_output)
+          json_valid = is_json(json_returned)
+          
+          if json_valid == False:
+            print(f"======= Returned JSON content not valid. Trying request again number {i} ===========================")
+            print(f"INVALID JSON content****{json_returned}****")
+          else:
+            break
+          
     ###### eo try requests three times
     # print(ocr_output.json())
  
@@ -265,24 +274,6 @@ try:
         print(error_message)
     else:
       # We got to ChatGPT
-      json_returned = ocr_output.json()['choices'][0]['message']['content']
-
-      # HERE I DEAL WITH SOME FORMATS THAT CREATE INVALID JSON
-      # 1) Turn to raw with "r" to avoid the escaping quotes problem
-      json_returned = fr'{json_returned}'
-      
-      # 2) Sometimes null still gets returned, even though I asked it not to
-      if "null" in json_returned: 
-        json_returned = json_returned.replace("null", "'none'")
-      
-      # 3) Occasionaly the whole of the otherwise valid JSON is returned with surrounding square brackets like '[{"text":"tim"}]'
-      # or other odd things like markup '''json and ''' etc.
-      # This removes everything prior to the opening "{" and after the closeing "}"
-      open_brace_index = json_returned.find("{")
-      json_returned = json_returned[open_brace_index:]
-      close_brace_index = json_returned.rfind("}")
-      json_returned = json_returned[:close_brace_index+1]
-      
       print(f"content****{json_returned}****")
       
       if is_json(json_returned):
