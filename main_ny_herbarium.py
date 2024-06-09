@@ -247,9 +247,9 @@ try:
             if response_code != 200:
                 print(f"======= 200 not returned {response_code}. Trying request again number {i} ===========================")
             else:
+                
                 json_returned = clean_up_ocr_output_json_content(ocr_output)
                 json_valid = is_json(json_returned)
-            
                 if json_valid == False:
                     print(f"======= Returned JSON content not valid. Trying request again number {i} ===========================")
                     print(f"INVALID JSON content****{json_returned}****")
@@ -257,28 +257,25 @@ try:
                     # Have to check that the returned JSON keys have the correct name
                     # Sometimes ChatGPT just doesn't do as its told and changes the key names!
                     break
-            
         ###### eo try requests three times
-        # print(ocr_output.json())
     
         # OK - we've tried three time to get
-        # 1. 200 returned
-        # 2. valid JSON returned
+        # 1. 200 returned AND
+        # 2. valid JSON returned AND
         # 3. valid key names
-        # Now if it all failed we still have to output a valid Dict line for the spreadsheet
-        # So here is where we deal with that
+        # Now we have to create a valid Dict line for the spreadsheet
     
         if response_code != 200:
             # NOT 200
             # Make a Dict line from the standard empty Dict and 
-            # Put the whole of the returned message in the OcrText field
+            # put the whole of the returned message in the OcrText field
             print("RAW ocr_output ****", ocr_output.json(),"****")                   
             dict_returned = eval(str(empty_output_dict))
             dict_returned['OcrText'] = str(ocr_output.json())  # Not OCR Text - this is for the final output DataFrame
             error_message = "200 NOT returned from GPT"
             print(error_message)
         else:
-        # We got to ChatGPT
+            # YES 200
             print(f"content****{json_returned}****")
         
             if is_json(json_returned):
