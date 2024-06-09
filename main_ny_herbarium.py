@@ -183,13 +183,13 @@ prompt = (
   
   f"Return the text you have extracted in the field 'OCR Text'"
   
-  f"Collection Team should contain other people involved in collecting the specimen"
+  f"'Collection Team' should contain other people involved in collecting the specimen"
   
   f"The 'Collection Date To' and 'Collection Date From' should have the format YYYY-MM-DD"
-  f"If there is only one data then fill in 'Collection Date To' and 'Collection Date From' with the same value"
+  f"If there is only one date then fill in 'Collection Date To' and 'Collection Date From' with the same value"
   
   f"If no Continent is mentioned then infer it from the Country"
-  f"If no Country is mentioned then infer it from the Province, County or Locality"
+  f"If no Country is mentioned then infer it from the Province, County or Locality Description"
   
   f"If no Latitude or Longitude information is available then infer it as accurately as possible from the Locality Description, County, Province or Country"
   f"If Latitude and Longitude have been inferred, fill in the 'Coordinate Uncertainty In Meters' with an estimate of the accuracy"
@@ -227,7 +227,7 @@ output_list = []
 count = 0
 try:
   print("####################################### START OUTPUT ######################################")
-  for image_path in image_path_list[:60]:
+  for image_path in image_path_list[:4]:
     
     print(f"\n########################## OCR OUTPUT {image_path} ##########################")
     count+=1

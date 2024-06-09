@@ -60,7 +60,7 @@ def create_and_save_dataframe(output_list, key_list_with_logging, output_path_na
 
   output_path = Path(output_path_name)
   with open(output_path, "w") as f:
-    output_df.to_csv(f, index=False)
+    output_df.to_csv(f, index=False, encoding="utf-8", sep=",")
     
     
 def make_payload(model, prompt, url_request, num_tokens):
