@@ -106,8 +106,8 @@ MODEL = "gpt-4o" # Context window of 128k max_tokens 4096
 load_dotenv()
 
 try:
-  my_api_key = os.environ['OPENAI_API_KEY']          
-  client = OpenAI(api_key=my_api_key)
+    my_api_key = os.environ['OPENAI_API_KEY']          
+    client = OpenAI(api_key=my_api_key)
 except Exception as ex:
     print("Exception:", ex)
     exit()
@@ -159,48 +159,48 @@ df_column_names = []          # To make the DataFrame with
 prompt_key_names = []         # To use in the prompt for ChatGPT
 empty_output_dict = dict([])  # Useful when you have an error but still need to return a whole DataFrame row
 for df_name, prompt_name in ocr_column_names:
-  df_column_names.append(df_name)     
-  prompt_key_names.append(prompt_name)   
-  empty_output_dict[df_name] = "none"
+    df_column_names.append(df_name)     
+    prompt_key_names.append(prompt_name)   
+    empty_output_dict[df_name] = "none"
 
 keys_concatenated = ", ".join(prompt_key_names) # For the prompt
 
 # Basically works
 prompt = (
-  f"Read this hebarium sheet and extract all the text you can"
-  f"The hebarium sheet may sometimes use Spanish, French or German"
-  f"Go through the text you have extracted and return data in JSON format with {keys_concatenated} as keys"
-  f"Return the text you have extracted in the field 'OCR Text'"
-  f"If you can not find a value for a key return value 'none'"
+    f"Read this hebarium sheet and extract all the text you can"
+    f"The hebarium sheet may sometimes use Spanish, French or German"
+    f"Go through the text you have extracted and return data in JSON format with {keys_concatenated} as keys"
+    f"Return the text you have extracted in the field 'OCR Text'"
+    f"If you can not find a value for a key return value 'none'"
 )
 
 
 prompt = (
-  f"Read this herbarium sheet and extract all the text you can"
-  f"The herbarium sheet may sometimes use Spanish, French or German"
-  f"Go through the text you have extracted and return data in JSON format with {keys_concatenated} as keys"
-  f"Use exactly {keys_concatenated} as keys"
-  
-  f"Return the text you have extracted in the field 'OCR Text'"
-  
-  f"'Collection Team' should contain other people involved in collecting the specimen"
-  
-  f"The 'Collection Date To' and 'Collection Date From' should have the format YYYY-MM-DD"
-  f"If there is only one date then fill in 'Collection Date To' and 'Collection Date From' with the same value"
-  
-  f"If no Continent is mentioned then infer it from the Country"
-  f"If no Country is mentioned then infer it from the Province, County or Locality Description"
-  
-  f"If no Latitude or Longitude information is available then infer it as accurately as possible from the Locality Description, County, Province or Country"
-  f"If Latitude and Longitude have been inferred, fill in the 'Coordinate Uncertainty In Meters' with an estimate of the accuracy"
-  
-  f"If a single elevation or altitude is mentioned fill in both the 'Minimum Elevation (Meters)' and 'Maximum Elevation (Meters)' with the same value"
-  f"If there is elevation information in Meters then do a conversion to feet and store the conversion in 'Minimum Elevation (Feet)' and 'Maximum Elevation (Feet)'"
-  
-  f"For 'Plant Frequency' look for words like Abundant, Occasional, Common, Frequent or Rare" 
-  f"For 'Plant Substrate' look for what the plant grows on e.g. on rotting log, on damp rock, on bark"
-  
-  f"If you can not find a value for a key return value 'none'"
+    f"Read this herbarium sheet and extract all the text you can"
+    f"The herbarium sheet may sometimes use Spanish, French or German"
+    f"Go through the text you have extracted and return data in JSON format with {keys_concatenated} as keys"
+    f"Use exactly {keys_concatenated} as keys"
+    
+    f"Return the text you have extracted in the field 'OCR Text'"
+    
+    f"'Collection Team' should contain other people involved in collecting the specimen"
+    
+    f"The 'Collection Date To' and 'Collection Date From' should have the format YYYY-MM-DD"
+    f"If there is only one date then fill in 'Collection Date To' and 'Collection Date From' with the same value"
+    
+    f"If no Continent is mentioned then infer it from the Country"
+    f"If no Country is mentioned then infer it from the Province, County or Locality Description"
+    
+    f"If no Latitude or Longitude information is available then infer it as accurately as possible from the Locality Description, County, Province or Country"
+    f"If Latitude and Longitude have been inferred, fill in the 'Coordinate Uncertainty In Meters' with an estimate of the accuracy"
+    
+    f"If a single elevation or altitude is mentioned fill in both the 'Minimum Elevation (Meters)' and 'Maximum Elevation (Meters)' with the same value"
+    f"If there is elevation information in Meters then do a conversion to feet and store the conversion in 'Minimum Elevation (Feet)' and 'Maximum Elevation (Feet)'"
+    
+    f"For 'Plant Frequency' look for words like Abundant, Occasional, Common, Frequent or Rare" 
+    f"For 'Plant Substrate' look for what the plant grows on e.g. on rotting log, on damp rock, on bark"
+    
+    f"If you can not find a value for a key return value 'none'"
 )
 
 
@@ -213,117 +213,119 @@ project_name = "ny_hebarium"
 
 source_type = "url" # url or offline
 if source_type == "url":
-  image_path_list = URL_PATH_LIST
+    image_path_list = URL_PATH_LIST
 else:
-  image_folder = Path(f"{input_folder}/")
-  image_path_list = list(image_folder.glob("*.jpg"))
+    image_folder = Path(f"{input_folder}/")
+    image_path_list = list(image_folder.glob("*.jpg"))
 
 headers = {
-  "Content-Type": "application/json",
-  "Authorization": f"Bearer {my_api_key}"
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {my_api_key}"
 }
 
 
 output_list = []
 count = 0
 try:
-  print("####################################### START OUTPUT ######################################")
-  for image_path in image_path_list[60:120]:
+    print("####################################### START OUTPUT ######################################")
+    for image_path in image_path_list[:3]:
     
-    print(f"\n########################## OCR OUTPUT {image_path} ##########################")
-    count+=1
-    print(f"count: {count}")
-    
-    error_message = "OK"
-    dict_returned = dict()
-    
-    payload = make_payload(model=MODEL, prompt=prompt, source_type="url", image_path=image_path, num_tokens=4096)
+        print(f"\n########################## OCR OUTPUT {image_path} ##########################")
+        count+=1
+        print(f"count: {count}")
+        
+        error_message = "OK"
+        dict_returned = dict()
+        
+        payload = make_payload(model=MODEL, prompt=prompt, source_type="url", image_path=image_path, num_tokens=4096)
 
-    num_tries = 3
-    for i in range(num_tries):
-        ocr_output = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload) 
-           
-        response_code = ocr_output.status_code
+        num_tries = 3
+        for i in range(num_tries):
+            ocr_output = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload) 
+            
+            response_code = ocr_output.status_code
+            if response_code != 200:
+                print(f"======= 200 not returned {response_code}. Trying request again number {i} ===========================")
+            else:
+                json_returned = clean_up_ocr_output_json_content(ocr_output)
+                json_valid = is_json(json_returned)
+            
+                if json_valid == False:
+                    print(f"======= Returned JSON content not valid. Trying request again number {i} ===========================")
+                    print(f"INVALID JSON content****{json_returned}****")
+                else:
+                    # Have to check that the returned JSON keys have the correct name
+                    # Sometimes ChatGPT just doesn't do as its told and changes the key names!
+                    break
+            
+        ###### eo try requests three times
+        # print(ocr_output.json())
+    
+        # OK - we've tried three time to get
+        # 1. 200 returned
+        # 2. valid JSON returned
+        # 3. valid key names
+        # Now if it all failed we still have to output a valid Dict line for the spreadsheet
+        # So here is where we deal with that
+    
         if response_code != 200:
-          print(f"======= 200 not returned {response_code}. Trying request again number {i} ===========================")
+            # NOT 200
+            # Make a Dict line from the standard empty Dict and 
+            # Put the whole of the returned message in the OcrText field
+            print("RAW ocr_output ****", ocr_output.json(),"****")                   
+            dict_returned = eval(str(empty_output_dict))
+            dict_returned['OcrText'] = str(ocr_output.json())  # Not OCR Text - this is for the final output DataFrame
+            error_message = "200 NOT returned from GPT"
+            print(error_message)
         else:
-          json_returned = clean_up_ocr_output_json_content(ocr_output)
-          json_valid = is_json(json_returned)
-          
-          if json_valid == False:
-            print(f"======= Returned JSON content not valid. Trying request again number {i} ===========================")
-            print(f"INVALID JSON content****{json_returned}****")
-          else:
-            # Have to check that the returned JSON keys have the correct name
-            # Sometimes ChatGPT just doesn't do as its told and changes the key names!
-            break
-          
-    ###### eo try requests three times
-    # print(ocr_output.json())
- 
-    # OK - we've tried three time to get
-    # 1. 200 returned
-    # 2. valid JSON returned
-    # 3. valid key names
-    # Now if it all failed we still have to output a valid Dict line for the spreadsheet
-    # So here is where we deal with that
- 
-    if response_code != 200:
-        # NOT 200
-        # Make a Dict line from the standard empty Dict and 
-        # Put the whole of the returned message in the OcrText field
-        print("RAW ocr_output ****", ocr_output.json(),"****")                   
-        dict_returned = eval(str(empty_output_dict))
-        dict_returned['OcrText'] = str(ocr_output.json())  # Not OCR Text - this is for the final output DataFrame
-        error_message = "200 NOT returned from GPT"
-        print(error_message)
-    else:
-      # We got to ChatGPT
-      print(f"content****{json_returned}****")
-      
-      if is_json(json_returned):
-        # VALID JSON
-        dict_returned = eval(json_returned) # JSON -> Dict
-
-        # Now change all the key names from the human readable used in the prompt to DataFrame output names
-        # i.e. the same names as are in the NY spreadsheet
-        # Have to deal with the possibility of invalid keys here
+        # We got to ChatGPT
+            print(f"content****{json_returned}****")
         
+            if is_json(json_returned):
+                # VALID JSON
+                dict_returned = eval(json_returned) # JSON -> Dict
+
+                # Now change all the key names from the human readable used in the prompt to DataFrame output names
+                # i.e. the same names as are in the NY spreadsheet
+                # Have to deal with the possibility of invalid keys here
+                
+                
+                for df_name, prompt_name in ocr_column_names:
+                    dict_returned[df_name] = dict_returned.pop(prompt_name)
+                
+            else:
+                # INVALID JSON
+                # Make a Dict line from the standard empty Dict and 
+                # just put the invalid JSON in the OcrText field
+                dict_returned = eval(str(empty_output_dict))
+                dict_returned['OcrText'] = str(json_returned)
+                error_message = "JSON NOT RETURNED FROM GPT"
+                print(error_message)
+            
+        # EO dealing with various types of returning code
         
-        for df_name, prompt_name in ocr_column_names:
-          dict_returned[df_name] = dict_returned.pop(prompt_name)
-          
-      else:
-        # INVALID JSON
-        # Make a Dict line from the standard empty Dict and 
-        # just put the invalid JSON in the OcrText field
-        dict_returned = eval(str(empty_output_dict))
-        dict_returned['OcrText'] = str(json_returned)
-        error_message = "JSON NOT RETURNED FROM GPT"
-        print(error_message)
-        
-    # Add columns that are involved in logging etc.
-    source_image_col = "URL"
-    error_col = "ERROR"
-    key_list_with_logging = [source_image_col, error_col] + df_column_names # This is the order that we would like the columns
-    dict_returned[source_image_col] = str(image_path)                       # Insert the image source file name into output
-    dict_returned[error_col] = str(error_message)                           # Insert error message into output
+        # Add columns that are involved in logging etc.
+        source_image_col = "URL"
+        error_col = "ERROR"
+        key_list_with_logging = [source_image_col, error_col] + df_column_names # This is the order that we would like the columns
+        dict_returned[source_image_col] = str(image_path)                       # Insert the image source file name into output
+        dict_returned[error_col] = str(error_message)                           # Insert error message into output
 
-    output_list.append(dict_returned) # Create list first, then turn into DataFrame
+        output_list.append(dict_returned) # Create list first, then turn into DataFrame
 
-    if count % batch_size == 0:
-      print(f"WRITING BATCH:{count}")
-      output_path_name = f"{output_folder}/{project_name}_{time_stamp}-{count}.csv"
-      create_and_save_dataframe(output_list=output_list, key_list_with_logging=key_list_with_logging, output_path_name=output_path_name)
+        if count % batch_size == 0:
+            print(f"WRITING BATCH:{count}")
+            output_path_name = f"{output_folder}/{project_name}_{time_stamp}-{count}.csv"
+            create_and_save_dataframe(output_list=output_list, key_list_with_logging=key_list_with_logging, output_path_name=output_path_name)
 
-  #################################### eo for loop
+    #################################### eo for loop
   
-  # For safe measure and during testing where batches are not batch_size
-  print(f"WRITING BATCH:{count}")
-  output_path_name = f"{output_folder}/{project_name}_{time_stamp}-{count}.csv"
-  create_and_save_dataframe(output_list=output_list, key_list_with_logging=key_list_with_logging, output_path_name=output_path_name)
+    # For safe measure and during testing where batches are not batch_size
+    print(f"WRITING BATCH:{count}")
+    output_path_name = f"{output_folder}/{project_name}_{time_stamp}-{count}.csv"
+    create_and_save_dataframe(output_list=output_list, key_list_with_logging=key_list_with_logging, output_path_name=output_path_name)
 
-  print("####################################### END OUTPUT ######################################")
+    print("####################################### END OUTPUT ######################################")
   
 except openai.APIError as e:
   #Handle API error here, e.g. retry or log
