@@ -99,8 +99,9 @@ import time
 from datetime import datetime
 import json
 
-# from url_transcribed_ny_sweetgum import URL_PATH_LIST
-from url_to_transcribe_ny_sweetgum_1000 import URL_PATH_LIST
+
+#from url_to_transcribe_ny_sweetgum_1000 import URL_PATH_LIST
+from url_transcribed_ny_sweetgum import URL_PATH_LIST
 
 MODEL = "gpt-4o" # Context window of 128k max_tokens 4096
 
@@ -229,7 +230,7 @@ output_list = []
 count = 0
 try:
     print("####################################### START OUTPUT ######################################")
-    for image_path in image_path_list[:3]:
+    for image_path in image_path_list:
     
         print(f"\n########################## OCR OUTPUT {image_path} ##########################")
         count+=1
