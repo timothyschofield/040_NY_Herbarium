@@ -1,4 +1,14 @@
 
+def get_headers(api_key):
+  
+  headers = {
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {api_key}"
+  }
+  
+  return headers
+
+
 # Sometimes ChatGPT returns invalid keys in the JSON
 # The json_returned must be valid JSON
 def are_keys_valid(json_returned, prompt_key_names):
@@ -101,12 +111,9 @@ def create_and_save_dataframe(output_list, key_list_with_logging, output_path_na
   with open(output_path, "w") as f:
     output_df.to_csv(f, index=False, encoding="utf-8", sep=",")
     
-import base64
-# Function to base64 encode an image
-def encode_image(image_path):
-    with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8') 
-    
+
+      
+# source_type "url" or "local"
 def make_payload(model, prompt, source_type, image_path, num_tokens):
   
   if source_type == "url":
@@ -138,4 +145,10 @@ def make_payload(model, prompt, source_type, image_path, num_tokens):
   } 
   
   return payload
-    
+
+
+import base64
+# Function to base64 encode an image
+def encode_image(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8') 

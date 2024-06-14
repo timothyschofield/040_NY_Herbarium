@@ -87,7 +87,7 @@ import openai
 from openai import OpenAI
 from dotenv import load_dotenv
 
-from helper_functions_ny_herbarium import encode_image, get_file_timestamp, is_json, create_and_save_dataframe, make_payload, clean_up_ocr_output_json_content, are_keys_valid
+from helper_functions_ny_herbarium import encode_image, get_file_timestamp, is_json, create_and_save_dataframe, make_payload, clean_up_ocr_output_json_content, are_keys_valid, get_headers
 
 import requests
 import os
@@ -128,9 +128,7 @@ time_stamp = get_file_timestamp()
 df_input_csv = pd.read_csv(input_path)
 
 # This would all be fine except that a DarImageURL column can contain multiple image urls in one line seperated a pipes ("|")
-# So its easiest just to get it out of the way and make a df copy with each url having its own line - the new df will have more lines of coarse
-# Give the new df the same column as the origonal
-
+# So its easiest just to get it out of the way and make a df copy with each url having its own line - the new df will have more lines obviously
 to_transcribe_list = []
 for index, row in df_input_csv.iterrows():
 
@@ -147,12 +145,11 @@ for index, row in df_input_csv.iterrows():
         this_row  = df_input_csv.loc[index].copy() 
         to_transcribe_list.append(this_row)    
 
-df_to_transcribe = pd.DataFrame(to_transcribe_list)
+df_to_transcribe = pd.DataFrame(to_transcribe_list).fillna('none')
+df_to_transcribe["ERROR"] = "none"
 
 
 
-
-exit()
 # These are the columns that ChatGPT will try to fill from the OCR
 # Other columns will include URL, ERROR, STOP REASON
 ocr_column_names = [ 
@@ -206,15 +203,6 @@ for df_name, prompt_name in ocr_column_names:
 
 keys_concatenated = ", ".join(prompt_key_names) # For the prompt
 
-# Basically works
-prompt = (
-    f"Read this hebarium sheet and extract all the text you can"
-    f"The hebarium sheet may sometimes use Spanish, French or German"
-    f"Go through the text you have extracted and return data in JSON format with {keys_concatenated} as keys"
-    f"Return the text you have extracted in the field 'OCR Text'"
-    f"If you can not find a value for a key return value 'none'"
-)
- 
 
 prompt = (
     f"Read this herbarium sheet and extract all the text you can"
@@ -244,151 +232,126 @@ prompt = (
     f"If you can not find a value for a key return value 'none'"
 )
 
+headers = get_headers(my_api_key)
 
-
-
-
-source_type = "url" # url or offline
-if source_type == "url":
-    image_path_list = URL_PATH_LIST
-else:
-    image_folder = Path(f"{input_folder}/")
-    image_path_list = list(image_folder.glob("*.jpg"))
-
-headers = {
-    "Content-Type": "application/json",
-    "Authorization": f"Bearer {my_api_key}"
-}
-
-
-output_list = []
-count = 0
-try:
-    print("####################################### START OUTPUT ######################################")
-    for image_path in image_path_list:
+# row[new_data.keys()] = new_data.values()
+output_list = [] # ???
+print("####################################### START OUTPUT ######################################")
+for index, row in df_to_transcribe.iterrows():
+    count = index
     
-        print(f"\n########################## OCR OUTPUT {image_path} ##########################")
-        count+=1
-        print(f"count: {count}")
+    url = row["DarImageURL"]
+    row["irn"] = "test"
+    
+    print(f"\n########################## OCR OUTPUT {url} ##########################")
+    print(f"count: {count}")
+    
+    payload = make_payload(model=MODEL, prompt=prompt, source_type="url", image_path=url, num_tokens=4096)
+
+    num_tries = 3
+    for i in range(num_tries):
+        ocr_output = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
         
-        error_message = "OK"
-        dict_returned = dict()
-        
-        payload = make_payload(model=MODEL, prompt=prompt, source_type="url", image_path=image_path, num_tokens=4096)
-
-        num_tries = 3
-        for i in range(num_tries):
-            ocr_output = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload) 
-            
-            response_code = ocr_output.status_code
-            if response_code != 200:
-                # NOT 200
-                print(f"======= 200 not returned {response_code}. Trying request again number {i} ===========================")
-            else:
-                # YES 200
-                json_returned = clean_up_ocr_output_json_content(ocr_output)
-                json_valid = is_json(json_returned)
-                if json_valid == False:
-                    # INVALID JSON
-                    print(f"======= Returned JSON content not valid. Trying request again number {i} ===========================")
-                    print(f"INVALID JSON content****{json_returned}****")
-                else:
-                    # VALID JSON
-                    # Have to check that the returned JSON keys are correct 
-                    # Sometimes ChatGPT just doesn't do as its told and changes the key names!
-                    if are_keys_valid(json_returned, prompt_key_names) == False:
-                        # INVALID KEYS
-                        print(f"======= Returned JSON contains invalid keys. Trying request again number {i} ===========================")
-                    else:
-                        # VALID KEYS
-                        break
-                    
-        ###### eo try requests three times
-    
-        # OK - we've tried three time to get
-        # 1. 200 returned AND
-        # 2. valid JSON returned AND
-        # 3. valid key names
-        # Now we have to create a valid Dict line for the spreadsheet
-    
+        response_code = ocr_output.status_code
         if response_code != 200:
             # NOT 200
-            # Make a Dict line from the standard empty Dict and 
-            # put the whole of the returned message in the OcrText field
-            print("RAW ocr_output ****", ocr_output.json(),"****")                   
-            dict_returned = eval(str(empty_output_dict))
-            dict_returned['OcrText'] = str(ocr_output.json())  # Not OCR Text - this is for the final output DataFrame
-            error_message = "200 NOT returned from GPT"
-            print(error_message)
+            print(f"======= 200 not returned {response_code}. Trying request again number: {i} ===========================")
         else:
             # YES 200
-            print(f"content****{json_returned}****")
-        
-            if is_json(json_returned):
-                # VALID JSON
-                
-                # Have to deal with the possibility of invalid keys returned in the valid JSON
-                if are_keys_valid(json_returned, prompt_key_names):
-                    # VALID KEYS
-                    # Now change all the key names from the human readable used in the prompt to DataFrame output names
-                    # to match the NY spreadsheet
-                    dict_returned = eval(json_returned) # JSON -> Dict
-                    for df_name, prompt_name in ocr_column_names:
-                        dict_returned[df_name] = dict_returned.pop(prompt_name)
-                else:
-                    # INVALID KEYS
-                    dict_returned = eval(str(empty_output_dict))
-                    dict_returned['OcrText'] = str(json_returned)                  
-                    error_message = "INVALID JSON KEYS RETURNED FROM GPT"
-                    print(error_message)
-            else:
+            json_returned = clean_up_ocr_output_json_content(ocr_output)
+            json_valid = is_json(json_returned)
+            if json_valid == False:
                 # INVALID JSON
-                # Make a Dict line from the standard empty Dict and 
-                # just put the invalid JSON in the OcrText field
-                dict_returned = eval(str(empty_output_dict))
-                dict_returned['OcrText'] = str(json_returned)
-                error_message = "JSON NOT RETURNED FROM GPT"
-                print(error_message)
+                print(f"======= Returned JSON content not valid. Trying request again number: {i} ===========================")
+                print(f"INVALID JSON content****{json_returned}****")
+            else:
+                # VALID JSON
+                # Have to check that the returned JSON keys are correct 
+                # Sometimes ChatGPT just doesn't do as its told and changes the key names!
+                if are_keys_valid(json_returned, prompt_key_names) == False:
+                    # INVALID KEYS
+                    print(f"======= Returned JSON contains invalid keys. Trying request again number: {i} ===========================")
+                else:
+                    # VALID KEYS
+                    break
+                
+    ###### eo try requests three times
+
+    # OK - we've tried three time to get
+    # 1. 200 returned AND
+    # 2. valid JSON returned AND
+    # 3. valid key names
+    # Now we have to create a valid Dict line for the spreadsheet
+    error_message = "OK"
+    dict_returned = dict() # ????
+    
+    if response_code != 200:
+        # NOT 200
+        # Make a Dict line from the standard empty Dict and 
+        # put the whole of the returned message in the OcrText field
+        print("RAW ocr_output ****", ocr_output.json(),"****")                   
+        dict_returned = eval(str(empty_output_dict))
+        dict_returned['OcrText'] = str(ocr_output.json())  # Not OCR Text - this is for the final output DataFrame
+        error_message = "200 NOT returned from GPT"
+        print(error_message)
+    else:
+        # YES 200
+        print(f"content****{json_returned}****")
+    
+        if is_json(json_returned):
+            # VALID JSON
             
-        # EO dealing with various types of returned code
+            # Have to deal with the possibility of invalid keys returned in the valid JSON
+            if are_keys_valid(json_returned, prompt_key_names):
+                # VALID KEYS
+                # Now change all the key names from the human readable used in the prompt to DataFrame output names
+                # to match the NY spreadsheet
+                dict_returned = eval(json_returned) # JSON -> Dict
+                for df_name, prompt_name in ocr_column_names:
+                    dict_returned[df_name] = dict_returned.pop(prompt_name)
+            else:
+                # INVALID KEYS
+                dict_returned = eval(str(empty_output_dict))
+                dict_returned['OcrText'] = str(json_returned)                  
+                error_message = "INVALID JSON KEYS RETURNED FROM GPT"
+                print(error_message)
+        else:
+            # INVALID JSON
+            # Make a Dict line from the standard empty Dict and 
+            # just put the invalid JSON in the OcrText field
+            dict_returned = eval(str(empty_output_dict))
+            dict_returned['OcrText'] = str(json_returned)
+            error_message = "JSON NOT RETURNED FROM GPT"
+            print(error_message)
         
-        # Add columns that are involved in logging etc.
-        source_image_col = "URL"
-        error_col = "ERROR"
-        key_list_with_logging = [source_image_col, error_col] + df_column_names # This is the order that we would like the columns
-        dict_returned[source_image_col] = str(image_path)                       # Insert the image source file name into output
-        dict_returned[error_col] = str(error_message)                           # Insert error message into output
+    # EO dealing with various types of returned code
+    
+    # Add columns that are involved in logging etc.
+    source_image_col = "URL" # already delt with
+    error_col = "ERROR"
+    key_list_with_logging = [source_image_col, error_col] + df_column_names # This is the order that we would like the columns
+    dict_returned[source_image_col] = str(url)                              # Insert the image source file name into output
+    dict_returned[error_col] = str(error_message)                           # Insert error message into output
+    
+    # row[dict_returned.keys()] = dict_returned.values()
+    
+    output_list.append(dict_returned) # Create list first, then turn into DataFrame
 
-        output_list.append(dict_returned) # Create list first, then turn into DataFrame
+    if count % batch_size == 0:
+        print(f"WRITING BATCH:{count}")
+        output_path_name = f"{output_folder}/{project_name}_{time_stamp}-{count}.csv"
+        create_and_save_dataframe(output_list=output_list, key_list_with_logging=key_list_with_logging, output_path_name=output_path_name)
 
-        if count % batch_size == 0:
-            print(f"WRITING BATCH:{count}")
-            output_path_name = f"{output_folder}/{project_name}_{time_stamp}-{count}.csv"
-            create_and_save_dataframe(output_list=output_list, key_list_with_logging=key_list_with_logging, output_path_name=output_path_name)
+#################################### eo for loop
 
-    #################################### eo for loop
+# For safe measure and during testing where batches are not batch_size
+print(f"WRITING BATCH:{count}")
+output_path_name = f"{output_folder}/{project_name}_{time_stamp}-{count}.csv"
+create_and_save_dataframe(output_list=output_list, key_list_with_logging=key_list_with_logging, output_path_name=output_path_name)
+
+print("####################################### END OUTPUT ######################################")
   
-    # For safe measure and during testing where batches are not batch_size
-    print(f"WRITING BATCH:{count}")
-    output_path_name = f"{output_folder}/{project_name}_{time_stamp}-{count}.csv"
-    create_and_save_dataframe(output_list=output_list, key_list_with_logging=key_list_with_logging, output_path_name=output_path_name)
 
-    print("####################################### END OUTPUT ######################################")
-  
-except openai.APIError as e:
-  #Handle API error here, e.g. retry or log
-  print(f"TIM: OpenAI API returned an API Error: {e}")
-  pass
-
-except openai.APIConnectionError as e:
-  #Handle connection error here
-  print(f"TIM: Failed to connect to OpenAI API: {e}")
-  pass
-
-except openai.RateLimitError as e:
-  #Handle rate limit error (we recommend using exponential backoff)
-  print(f"TIM: OpenAI API request exceeded rate limit: {e}")
-  pass
   
 
 
