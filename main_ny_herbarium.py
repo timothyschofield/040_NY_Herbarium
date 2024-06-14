@@ -175,7 +175,7 @@ prompt = (
     f"Return the text you have extracted in the field 'OCR Text'"
     f"If you can not find a value for a key return value 'none'"
 )
-
+ 
 
 prompt = (
     f"Read this herbarium sheet and extract all the text you can"
