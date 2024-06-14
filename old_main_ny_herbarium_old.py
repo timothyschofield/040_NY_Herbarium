@@ -99,6 +99,7 @@ import time
 from datetime import datetime
 import json
 
+
 #from url_to_transcribe_ny_sweetgum_1000 import URL_PATH_LIST
 from url_transcribed_ny_sweetgum import URL_PATH_LIST
 
@@ -113,46 +114,6 @@ except Exception as ex:
     print("Exception:", ex)
     exit()
 
-input_folder = "ny_hebarium_input"
-input_file = "NY_specimens_to_transcribe.csv"
-input_path = Path(f"{input_folder}/{input_file}")
-
-output_folder = "ny_hebarium_output"
-
-project_name = "ny_hebarium_new"
-
-batch_size = 20 # saves every
-time_stamp = get_file_timestamp()
-
-# This is just blank exept for the columns already filled in like irn and DarImageURL
-df_input_csv = pd.read_csv(input_path)
-
-# This would all be fine except that a DarImageURL column can contain multiple image urls in one line seperated a pipes ("|")
-# So its easiest just to get it out of the way and make a df copy with each url having its own line - the new df will have more lines of coarse
-# Give the new df the same column as the origonal
-
-to_transcribe_list = []
-for index, row in df_input_csv.iterrows():
-
-    dar_image_url = row["DarImageURL"]
-    if "|" in dar_image_url:
-        
-        url_list = dar_image_url.split("|")
-        for url in url_list:
-            url = url.strip()
-            this_row = df_input_csv.loc[index].copy()
-            this_row["DarImageURL"] = url
-            to_transcribe_list.append(this_row)
-    else:
-        this_row  = df_input_csv.loc[index].copy() 
-        to_transcribe_list.append(this_row)    
-
-df_to_transcribe = pd.DataFrame(to_transcribe_list)
-
-
-
-
-exit()
 # These are the columns that ChatGPT will try to fill from the OCR
 # Other columns will include URL, ERROR, STOP REASON
 ocr_column_names = [ 
@@ -245,8 +206,12 @@ prompt = (
 )
 
 
+batch_size = 20 # saves every
+time_stamp = get_file_timestamp()
 
-
+input_folder = "ny_hebarium_input"
+output_folder = "ny_hebarium_output"
+project_name = "ny_hebarium"
 
 source_type = "url" # url or offline
 if source_type == "url":

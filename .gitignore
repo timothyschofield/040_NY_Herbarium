@@ -4,3 +4,4 @@ back/
 ny_hebarium_input/
 ny_hebarium_output/
 .env
+old_main_herbarium_old.py
