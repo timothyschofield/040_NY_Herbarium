@@ -87,7 +87,7 @@ import openai
 from openai import OpenAI
 from dotenv import load_dotenv
 
-from helper_functions_ny_herbarium import encode_image, get_file_timestamp, is_json, create_and_save_dataframe, make_payload, clean_up_ocr_output_json_content, are_keys_valid, get_headers
+from helper_functions_ny_herbarium import get_file_timestamp, is_json, make_payload, clean_up_ocr_output_json_content, are_keys_valid, get_headers, save_dataframe
 
 import requests
 import os
@@ -113,6 +113,19 @@ except Exception as ex:
     print("Exception:", ex)
     exit()
 
+"""
+data = {'Name': ['Ankit', 'Amit', 'Aishwarya', 'Priyanka'],
+        'Age': [21, 19, 20, 18],
+        'Stream': ['Math', 'Commerce', 'Arts', 'Biology'],
+        'Percentage': [88, 92, 95, 70]}
+df = pd.DataFrame(data, columns=['Name', 'Age', 'Stream', 'Percentage'])
+
+for index, row in df.iterrows():
+   df.at[index, "Age"] = 45 + index
+
+print(df)
+"""
+
 input_folder = "ny_hebarium_input"
 input_file = "NY_specimens_to_transcribe.csv"
 input_path = Path(f"{input_folder}/{input_file}")
@@ -121,7 +134,7 @@ output_folder = "ny_hebarium_output"
 
 project_name = "ny_hebarium_new"
 
-batch_size = 20 # saves every
+batch_size = 3 # saves every
 time_stamp = get_file_timestamp()
 
 # This is just blank exept for the columns already filled in like irn and DarImageURL
@@ -148,6 +161,11 @@ for index, row in df_input_csv.iterrows():
 df_to_transcribe = pd.DataFrame(to_transcribe_list).fillna('none')
 df_to_transcribe["ERROR"] = "none"
 
+# Necessary because by copying rows to give each url a seperate row, we have also copied indexes
+# We want each row to have its own index - so reset_index
+df_to_transcribe.reset_index(drop=True, inplace=True)
+
+# print(df_to_transcribe)
 
 
 # These are the columns that ChatGPT will try to fill from the OCR
@@ -234,14 +252,11 @@ prompt = (
 
 headers = get_headers(my_api_key)
 
-# row[new_data.keys()] = new_data.values()
-output_list = [] # ???
 print("####################################### START OUTPUT ######################################")
 for index, row in df_to_transcribe.iterrows():
     count = index
     
     url = row["DarImageURL"]
-    row["irn"] = "test"
     
     print(f"\n########################## OCR OUTPUT {url} ##########################")
     print(f"count: {count}")
@@ -283,8 +298,7 @@ for index, row in df_to_transcribe.iterrows():
     # 3. valid key names
     # Now we have to create a valid Dict line for the spreadsheet
     error_message = "OK"
-    dict_returned = dict() # ????
-    
+    dict_returned = dict()
     if response_code != 200:
         # NOT 200
         # Make a Dict line from the standard empty Dict and 
@@ -306,7 +320,9 @@ for index, row in df_to_transcribe.iterrows():
                 # VALID KEYS
                 # Now change all the key names from the human readable used in the prompt to DataFrame output names
                 # to match the NY spreadsheet
+                
                 dict_returned = eval(json_returned) # JSON -> Dict
+                
                 for df_name, prompt_name in ocr_column_names:
                     dict_returned[df_name] = dict_returned.pop(prompt_name)
             else:
@@ -324,30 +340,24 @@ for index, row in df_to_transcribe.iterrows():
             error_message = "JSON NOT RETURNED FROM GPT"
             print(error_message)
         
-    # EO dealing with various types of returned code
+    ###### EO dealing with various types of returned code ######
     
-    # Add columns that are involved in logging etc.
-    source_image_col = "URL" # already delt with
-    error_col = "ERROR"
-    key_list_with_logging = [source_image_col, error_col] + df_column_names # This is the order that we would like the columns
-    dict_returned[source_image_col] = str(url)                              # Insert the image source file name into output
-    dict_returned[error_col] = str(error_message)                           # Insert error message into output
-    
-    # row[dict_returned.keys()] = dict_returned.values()
-    
-    output_list.append(dict_returned) # Create list first, then turn into DataFrame
+    dict_returned["ERROR"] = str(error_message)  # Insert error message into output
 
+    #df_to_transcribe.loc[index, ["irn", "DarGlobalUniqueIdentifier"]] = [45 + index, "Tim"]
+    df_to_transcribe.loc[index, dict_returned.keys()] = dict_returned.values()
+    
     if count % batch_size == 0:
         print(f"WRITING BATCH:{count}")
-        output_path_name = f"{output_folder}/{project_name}_{time_stamp}-{count}.csv"
-        create_and_save_dataframe(output_list=output_list, key_list_with_logging=key_list_with_logging, output_path_name=output_path_name)
+        output_path = f"{output_folder}/{project_name}_{time_stamp}-{count:03}.csv"
+        save_dataframe(df_to_save=df_to_transcribe, output_path=output_path)
 
-#################################### eo for loop
+#################################### eo for loop ####################################
 
 # For safe measure and during testing where batches are not batch_size
 print(f"WRITING BATCH:{count}")
-output_path_name = f"{output_folder}/{project_name}_{time_stamp}-{count}.csv"
-create_and_save_dataframe(output_list=output_list, key_list_with_logging=key_list_with_logging, output_path_name=output_path_name)
+output_path = f"{output_folder}/{project_name}_{time_stamp}-{count:03}.csv"
+save_dataframe(df_to_save=df_to_transcribe, output_path=output_path)
 
 print("####################################### END OUTPUT ######################################")
   

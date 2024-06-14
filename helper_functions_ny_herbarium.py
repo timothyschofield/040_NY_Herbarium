@@ -112,6 +112,11 @@ def create_and_save_dataframe(output_list, key_list_with_logging, output_path_na
     output_df.to_csv(f, index=False, encoding="utf-8", sep=",")
     
 
+def save_dataframe(df_to_save, output_path):
+  with open(output_path, "w") as f:
+    df_to_save.to_csv(f, index=False, encoding="utf-8", sep=",")
+
+
       
 # source_type "url" or "local"
 def make_payload(model, prompt, source_type, image_path, num_tokens):
