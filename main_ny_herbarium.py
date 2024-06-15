@@ -113,18 +113,6 @@ except Exception as ex:
     print("Exception:", ex)
     exit()
 
-"""
-data = {'Name': ['Ankit', 'Amit', 'Aishwarya', 'Priyanka'],
-        'Age': [21, 19, 20, 18],
-        'Stream': ['Math', 'Commerce', 'Arts', 'Biology'],
-        'Percentage': [88, 92, 95, 70]}
-df = pd.DataFrame(data, columns=['Name', 'Age', 'Stream', 'Percentage'])
-
-for index, row in df.iterrows():
-   df.at[index, "Age"] = 45 + index
-
-print(df)
-"""
 
 input_folder = "ny_hebarium_input"
 input_file = "NY_specimens_to_transcribe.csv"
@@ -165,11 +153,7 @@ df_to_transcribe["ERROR"] = "none"
 # We want each row to have its own index - so reset_index
 df_to_transcribe.reset_index(drop=True, inplace=True)
 
-# print(df_to_transcribe)
-
-
 # These are the columns that ChatGPT will try to fill from the OCR
-# Other columns will include URL, ERROR, STOP REASON
 ocr_column_names = [ 
         ("DarCollector","Collector Name"), 
         ("CollectionTeam","Collection Team"), 
@@ -220,6 +204,16 @@ for df_name, prompt_name in ocr_column_names:
     empty_output_dict[df_name] = "none"
 
 keys_concatenated = ", ".join(prompt_key_names) # For the prompt
+
+# Should check that the columns in df_column_names are in df_to_transcribe
+# If they are not, no error occures, but the OCR output will be not copied into the missing columns
+# This is silent and bad
+df_to_transcribe_keys = list(df_to_transcribe.keys())
+if set(df_column_names) <= set(df_to_transcribe_keys):
+    print("df_column_names is a subset of df_to_transcribe_keys - GOOD")
+else:
+    print("ERROR: df_column_names is NOT a subset of df_to_transcribe_keys - BAD")
+    exit()
 
 
 prompt = (
@@ -305,8 +299,8 @@ for index, row in df_to_transcribe.iterrows():
         # put the whole of the returned message in the OcrText field
         print("RAW ocr_output ****", ocr_output.json(),"****")                   
         dict_returned = eval(str(empty_output_dict))
-        dict_returned['OcrText'] = str(ocr_output.json())  # Not OCR Text - this is for the final output DataFrame
-        error_message = "200 NOT returned from GPT"
+        dict_returned['OcrText'] = str(ocr_output.json())
+        error_message = "200 NOT RETURNED FROM GPT"
         print(error_message)
     else:
         # YES 200
@@ -318,8 +312,8 @@ for index, row in df_to_transcribe.iterrows():
             # Have to deal with the possibility of invalid keys returned in the valid JSON
             if are_keys_valid(json_returned, prompt_key_names):
                 # VALID KEYS
-                # Now change all the key names from the human readable used in the prompt to DataFrame output names
-                # to match the NY spreadsheet
+                # Now change all the key names from the human readable used in the prompt to 
+                # DataFrame output names to match the NY spreadsheet
                 
                 dict_returned = eval(json_returned) # JSON -> Dict
                 
@@ -344,7 +338,6 @@ for index, row in df_to_transcribe.iterrows():
     
     dict_returned["ERROR"] = str(error_message)  # Insert error message into output
 
-    #df_to_transcribe.loc[index, ["irn", "DarGlobalUniqueIdentifier"]] = [45 + index, "Tim"]
     df_to_transcribe.loc[index, dict_returned.keys()] = dict_returned.values()
     
     if count % batch_size == 0:
