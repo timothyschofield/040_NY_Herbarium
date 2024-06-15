@@ -267,8 +267,10 @@ prompt = (
     f"If a single elevation or altitude is mentioned fill in both the 'Minimum Elevation (Meters)' and 'Maximum Elevation (Meters)' with the same value"
     f"If there is elevation information in Meters then do a conversion to feet and store the conversion in 'Minimum Elevation (Feet)' and 'Maximum Elevation (Feet)'"
     
-    f"For 'Plant Frequency' field look for words like Abundant, Occasional, Common, Frequent or Rare" 
+    f"For 'Plant Frequency' field look for words like Abundant, Occasional, Common, Frequent or Rare"
+    f"Fot 'Plant Habitat' field put what type of environment the plant grows in e.g. forest, scrub, rocky hillside"
     f"For 'Plant Substrate' field look for what the plant grows on e.g. on rotting log, on damp rock, on bark"
+    f"For 'Plant Description' field put a description of the plant e.g. Shrub 4m high, flowers white, fruit orange"
     
     f"If a plant is cultivated put 'Yes' in the 'FeaCultivated? (Y/N)' field, otherwise put 'No'"
     
