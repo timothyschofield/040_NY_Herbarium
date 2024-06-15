@@ -99,8 +99,8 @@ import time
 from datetime import datetime
 import json
 
-#from url_to_transcribe_ny_sweetgum_1000 import URL_PATH_LIST
-from url_transcribed_ny_sweetgum import URL_PATH_LIST
+# from url_to_transcribe_ny_sweetgum_1000 import URL_PATH_LIST
+# from url_transcribed_ny_sweetgum import URL_PATH_LIST
 
 MODEL = "gpt-4o" # Context window of 128k max_tokens 4096
 
@@ -120,7 +120,7 @@ input_path = Path(f"{input_folder}/{input_file}")
 
 output_folder = "ny_hebarium_output"
 
-project_name = "ny_hebarium"
+project_name = "ny_hebarium_improvement"
 
 batch_size = 10 # saves every
 time_stamp = get_file_timestamp()
@@ -216,12 +216,39 @@ else:
     print("ERROR: df_column_names is NOT a subset of df_to_transcribe_keys - BAD")
     exit()
 
-
+# Before imporovment
+"""
 prompt = (
     f"Read this herbarium sheet and extract all the text you can"
     f"The herbarium sheet may sometimes use Spanish, French or German"
     f"Go through the text you have extracted and return data in JSON format with {keys_concatenated} as keys"
     f"Use exactly {keys_concatenated} as keys"
+    f"Return the text you have extracted in the field 'OCR Text'"
+    f"'Collection Team' should contain other people involved in collecting the specimen"
+    f"The 'Collection Date To' and 'Collection Date From' should have the format YYYY-MM-DD"
+    f"If there is only one date then fill in 'Collection Date To' and 'Collection Date From' with the same value"
+    f"If no Continent is mentioned then infer it from the Country"
+    f"If no Country is mentioned then infer it from the Province, County or Locality Description"
+    f"If no Latitude or Longitude information is available then infer it as accurately as possible from the Locality Description, County, Province and Country"
+    f"If Latitude and Longitude have been inferred, fill in the 'Coordinate Uncertainty In Meters' with an estimate of the accuracy"
+    f"If a single elevation or altitude is mentioned fill in both the 'Minimum Elevation (Meters)' and 'Maximum Elevation (Meters)' with the same value"
+    f"If there is elevation information in Meters then do a conversion to feet and store the conversion in 'Minimum Elevation (Feet)' and 'Maximum Elevation (Feet)'"
+    f"For 'Plant Frequency' look for words like Abundant, Occasional, Common, Frequent or Rare" 
+    f"For 'Plant Substrate' look for what the plant grows on e.g. on rotting log, on damp rock, on bark"
+    f"If you can not find a value for a key return value 'none'"
+)
+"""
+
+
+
+# New - got it to estimate Lat and Long from location
+prompt = (
+    f"Read this herbarium sheet and extract all the text you can"
+    f"The herbarium sheet may sometimes use Spanish, French or German"
+    f"Go through the text you have extracted and return data in JSON format with {keys_concatenated} as keys"
+    f"Use exactly {keys_concatenated} as keys"
+    
+    f"Use the English spelling for Country e.g. 'Brazil' not 'Brasil'"
     
     f"Return the text you have extracted in the field 'OCR Text'"
     
@@ -233,17 +260,27 @@ prompt = (
     f"If no Continent is mentioned then infer it from the Country"
     f"If no Country is mentioned then infer it from the Province, County or Locality Description"
     
-    f"If no Latitude or Longitude information is available then infer it as accurately as possible from the Locality Description, County, Province and Country"
-    f"If Latitude and Longitude have been inferred, fill in the 'Coordinate Uncertainty In Meters' with an estimate of the accuracy"
+    f"If Latitude and Longitude are not mentioned in the text then infer them from the Country, Province, County and Locality Description"
+    f"Put the infered Latitude and Longitude in the 'Latitude (Degrees Minutes Seconds)' 'Longitude (Degrees Minutes Seconds)' 'Latitude Decimal' and 'Longitude Decimal' fields"
+    f"If Latitude and Longitude have been inferred fill in the 'Coordinate Uncertainty In Meters' with an estimate of the accuracy and 'Geo Reference Method' with 'Estimated from locality description'"
     
     f"If a single elevation or altitude is mentioned fill in both the 'Minimum Elevation (Meters)' and 'Maximum Elevation (Meters)' with the same value"
     f"If there is elevation information in Meters then do a conversion to feet and store the conversion in 'Minimum Elevation (Feet)' and 'Maximum Elevation (Feet)'"
     
-    f"For 'Plant Frequency' look for words like Abundant, Occasional, Common, Frequent or Rare" 
-    f"For 'Plant Substrate' look for what the plant grows on e.g. on rotting log, on damp rock, on bark"
+    f"For 'Plant Frequency' field look for words like Abundant, Occasional, Common, Frequent or Rare" 
+    f"For 'Plant Substrate' field look for what the plant grows on e.g. on rotting log, on damp rock, on bark"
+    
+    f"If a plant is cultivated put 'Yes' in the 'FeaCultivated? (Y/N)' field, otherwise put 'No'"
+    
+    f"If you find 'INB' followed by a number add INB and the number to SpeOtherSpecimenNumbers_tab"
     
     f"If you can not find a value for a key return value 'none'"
 )
+
+
+
+
+
 
 headers = get_headers(my_api_key)
 
@@ -346,7 +383,7 @@ for index, row in df_to_transcribe.iterrows():
         output_path = f"{output_folder}/{project_name}_{time_stamp}-{count:04}"
         save_dataframe_to_csv(df_to_save=df_to_transcribe, output_path=output_path)
 
-    if count > 10: break
+    if count > 50: break
 
 #################################### eo for loop ####################################
 
