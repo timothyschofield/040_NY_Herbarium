@@ -87,7 +87,7 @@ import openai
 from openai import OpenAI
 from dotenv import load_dotenv
 
-from helper_functions_ny_herbarium import get_file_timestamp, is_json, make_payload, clean_up_ocr_output_json_content, are_keys_valid, get_headers, save_dataframe
+from helper_functions_ny_herbarium import get_file_timestamp, is_json, make_payload, clean_up_ocr_output_json_content, are_keys_valid, get_headers, save_dataframe_to_csv
 
 import requests
 import os
@@ -120,9 +120,9 @@ input_path = Path(f"{input_folder}/{input_file}")
 
 output_folder = "ny_hebarium_output"
 
-project_name = "ny_hebarium_new"
+project_name = "ny_hebarium"
 
-batch_size = 3 # saves every
+batch_size = 10 # saves every
 time_stamp = get_file_timestamp()
 
 # This is just blank exept for the columns already filled in like irn and DarImageURL
@@ -233,7 +233,7 @@ prompt = (
     f"If no Continent is mentioned then infer it from the Country"
     f"If no Country is mentioned then infer it from the Province, County or Locality Description"
     
-    f"If no Latitude or Longitude information is available then infer it as accurately as possible from the Locality Description, County, Province or Country"
+    f"If no Latitude or Longitude information is available then infer it as accurately as possible from the Locality Description, County, Province and Country"
     f"If Latitude and Longitude have been inferred, fill in the 'Coordinate Uncertainty In Meters' with an estimate of the accuracy"
     
     f"If a single elevation or altitude is mentioned fill in both the 'Minimum Elevation (Meters)' and 'Maximum Elevation (Meters)' with the same value"
@@ -249,7 +249,7 @@ headers = get_headers(my_api_key)
 
 print("####################################### START OUTPUT ######################################")
 for index, row in df_to_transcribe.iterrows():
-    count = index
+    count = index + 1
     
     url = row["DarImageURL"]
     
@@ -343,15 +343,17 @@ for index, row in df_to_transcribe.iterrows():
     
     if count % batch_size == 0:
         print(f"WRITING BATCH:{count}")
-        output_path = f"{output_folder}/{project_name}_{time_stamp}-{count:04}.csv"
-        save_dataframe(df_to_save=df_to_transcribe, output_path=output_path)
+        output_path = f"{output_folder}/{project_name}_{time_stamp}-{count:04}"
+        save_dataframe_to_csv(df_to_save=df_to_transcribe, output_path=output_path)
+
+    if count > 10: break
 
 #################################### eo for loop ####################################
 
 # For safe measure and during testing where batches are not batch_size
 print(f"WRITING BATCH:{count}")
-output_path = f"{output_folder}/{project_name}_{time_stamp}-{count:04}.csv"
-save_dataframe(df_to_save=df_to_transcribe, output_path=output_path)
+output_path = f"{output_folder}/{project_name}_{time_stamp}-{count:04}"
+save_dataframe_to_csv(df_to_save=df_to_transcribe, output_path=output_path)
 
 print("####################################### END OUTPUT ######################################")
   
