@@ -148,6 +148,7 @@ for index, row in df_input_csv.iterrows():
 
 df_to_transcribe = pd.DataFrame(to_transcribe_list).fillna('none')
 df_to_transcribe["ERROR"] = "none"
+df_to_transcribe["MyOcrText"] = "No OCR text"
 
 # Necessary because by copying rows to give each url a seperate row, we have also copied indexes
 # We want each row to have its own index - so reset_index
@@ -192,7 +193,7 @@ ocr_column_names = [
         ("HabVegetation","Plant Forest Type"), 
         ("HabSubstrate","Plant Substrate"), 
         ("SpeOtherSpecimenNumbers_tab","SpeOtherSpecimenNumbers_tab"), 
-        ("OcrText", "OCR Text")]
+        ("MyOcrText", "OCR Text")]
 
 
 df_column_names = []          # To make the DataFrame with
@@ -299,7 +300,7 @@ for index, row in df_to_transcribe.iterrows():
         # put the whole of the returned message in the OcrText field
         print("RAW ocr_output ****", ocr_output.json(),"****")                   
         dict_returned = eval(str(empty_output_dict))
-        dict_returned['OcrText'] = str(ocr_output.json())
+        dict_returned['MyOcrText'] = str(ocr_output.json())
         error_message = "200 NOT RETURNED FROM GPT"
         print(error_message)
     else:
@@ -322,7 +323,7 @@ for index, row in df_to_transcribe.iterrows():
             else:
                 # INVALID KEYS
                 dict_returned = eval(str(empty_output_dict))
-                dict_returned['OcrText'] = str(json_returned)                  
+                dict_returned['MyOcrText'] = str(json_returned)                  
                 error_message = "INVALID JSON KEYS RETURNED FROM GPT"
                 print(error_message)
         else:
@@ -330,26 +331,26 @@ for index, row in df_to_transcribe.iterrows():
             # Make a Dict line from the standard empty Dict and 
             # just put the invalid JSON in the OcrText field
             dict_returned = eval(str(empty_output_dict))
-            dict_returned['OcrText'] = str(json_returned)
+            dict_returned['MyOcrText'] = str(json_returned)
             error_message = "JSON NOT RETURNED FROM GPT"
             print(error_message)
         
     ###### EO dealing with various types of returned code ######
     
     dict_returned["ERROR"] = str(error_message)  # Insert error message into output
-
-    df_to_transcribe.loc[index, dict_returned.keys()] = dict_returned.values()
+    
+    df_to_transcribe.loc[index, dict_returned.keys()] = dict_returned.values() # <<<<<<<<<<<<<<<<< 
     
     if count % batch_size == 0:
         print(f"WRITING BATCH:{count}")
-        output_path = f"{output_folder}/{project_name}_{time_stamp}-{count:03}.csv"
+        output_path = f"{output_folder}/{project_name}_{time_stamp}-{count:04}.csv"
         save_dataframe(df_to_save=df_to_transcribe, output_path=output_path)
 
 #################################### eo for loop ####################################
 
 # For safe measure and during testing where batches are not batch_size
 print(f"WRITING BATCH:{count}")
-output_path = f"{output_folder}/{project_name}_{time_stamp}-{count:03}.csv"
+output_path = f"{output_folder}/{project_name}_{time_stamp}-{count:04}.csv"
 save_dataframe(df_to_save=df_to_transcribe, output_path=output_path)
 
 print("####################################### END OUTPUT ######################################")
