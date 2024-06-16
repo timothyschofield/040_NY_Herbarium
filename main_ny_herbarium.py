@@ -116,13 +116,13 @@ except Exception as ex:
     exit()
 
 
-input_folder = "ny_hebarium_input"
+input_folder = "ny_herbarium_input"
 input_file = "NY_specimens_to_transcribe.csv"
 input_path = Path(f"{input_folder}/{input_file}")
 
-output_folder = "ny_hebarium_output"
+output_folder = "ny_herbarium_output"
 
-project_name = "ny_hebarium_improvement"
+project_name = "ny_herbarium_improvement"
 
 batch_size = 20 # saves every
 time_stamp = get_file_timestamp()
@@ -389,7 +389,7 @@ for index, row in df_to_transcribe.iloc[0:].iterrows():
 
 #################################### eo for loop ####################################
 
-# For safe measure and during testing where batches are not batch_size
+# For safe measure and during testing where batches are not %batch_size
 print(f"WRITING BATCH:{count}")
 output_path = f"{output_folder}/{project_name}_{time_stamp}-{count:04}"
 save_dataframe_to_csv(df_to_save=df_to_transcribe, output_path=output_path)

@@ -1,7 +1,6 @@
 ﻿__pycache__/
 _00_NY_Herberium_Notes/
 back/
-ny_hebarium_input/
-ny_hebarium_output/
+ny_herbarium_input/
+ny_herbarium_output/
 .env
-old_main_herbarium_old.py
