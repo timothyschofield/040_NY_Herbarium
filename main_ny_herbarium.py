@@ -98,6 +98,8 @@ import pandas as pd
 import time
 from datetime import datetime
 import json
+import sys
+print(f"Python version {sys.version}")
 
 # from url_to_transcribe_ny_sweetgum_1000 import URL_PATH_LIST
 # from url_transcribed_ny_sweetgum import URL_PATH_LIST
@@ -122,7 +124,7 @@ output_folder = "ny_hebarium_output"
 
 project_name = "ny_hebarium_improvement"
 
-batch_size = 10 # saves every
+batch_size = 20 # saves every
 time_stamp = get_file_timestamp()
 
 # This is just blank exept for the columns already filled in like irn and DarImageURL
@@ -280,14 +282,12 @@ prompt = (
 )
 
 
-
-
-
-
 headers = get_headers(my_api_key)
 
+    
 print("####################################### START OUTPUT ######################################")
-for index, row in df_to_transcribe.iterrows():
+for index, row in df_to_transcribe.iloc[0:].iterrows():  
+
     count = index + 1
     
     url = row["DarImageURL"]
@@ -385,7 +385,7 @@ for index, row in df_to_transcribe.iterrows():
         output_path = f"{output_folder}/{project_name}_{time_stamp}-{count:04}"
         save_dataframe_to_csv(df_to_save=df_to_transcribe, output_path=output_path)
 
-    if count > 50: break
+   
 
 #################################### eo for loop ####################################
 
