@@ -120,6 +120,8 @@ input_folder = "ny_herbarium_input"
 input_file = "NY_specimens_to_transcribe.csv"
 input_path = Path(f"{input_folder}/{input_file}")
 
+input_jpg_folder = "jpg_folder_input"
+
 output_folder = "ny_herbarium_output"
 
 project_name = "ny_herbarium_improvement"
@@ -243,7 +245,7 @@ prompt = (
 
 
 
-# New - got it to estimate Lat and Long from location
+# New - got it to estimate Lat and Lng from location
 prompt = (
     f"Read this herbarium sheet and extract all the text you can"
     f"The herbarium sheet may sometimes use Spanish, French or German"
@@ -284,18 +286,24 @@ prompt = (
 
 headers = get_headers(my_api_key)
 
-    
+source_type="url" # "url" or "local"
 print("####################################### START OUTPUT ######################################")
 for index, row in df_to_transcribe.iloc[0:].iterrows():  
 
     count = index + 1
     
-    url = row["DarImageURL"]
+    image_path = row["DarImageURL"]
     
-    print(f"\n########################## OCR OUTPUT {url} ##########################")
+    
+    if source_type != "url":
+        # JPGs in local folder
+        filename = image_path.split("/")[-1]
+        image_path = Path(f"{input_jpg_folder}/{filename}")
+
+    print(f"\n########################## OCR OUTPUT {image_path} ##########################")
     print(f"count: {count}")
     
-    payload = make_payload(model=MODEL, prompt=prompt, source_type="url", image_path=url, num_tokens=4096)
+    payload = make_payload(model=MODEL, prompt=prompt, source_type=source_type, image_path=image_path, num_tokens=4096)
 
     num_tries = 3
     for i in range(num_tries):

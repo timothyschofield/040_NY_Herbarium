@@ -10,7 +10,7 @@ df_input_csv = pd.read_csv(input_path)
 input_url_list = df_input_csv["DarImageURL"]
 # print(input_url_list)
 
-output_folder = "jpg_folder"
+output_folder = "jpg_folder_input"
 count = 1
 for url in input_url_list:
 
@@ -33,8 +33,6 @@ for url in input_url_list:
             f.write(res.content)
     else:
         print("200 not returned")
-
-   
 
 
 
