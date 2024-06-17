@@ -106,7 +106,7 @@ print(f"Python version {sys.version}")
 
 MODEL = "gpt-4o" # Context window of 128k max_tokens 4096
 
-load_dotenv()
+load_dotenv() 
 
 try:
     my_api_key = os.environ['OPENAI_API_KEY']          
@@ -259,7 +259,7 @@ prompt = (
     f"The 'Collection Date To' and 'Collection Date From' should have the format YYYY-MM-DD"
     f"If there is only one date then fill in 'Collection Date To' and 'Collection Date From' with the same value"
     
-    f"If no Continent is mentioned then infer it from the Country"
+    f"Infer the Continent field from the Country e.g. If the Country is 'Belize' then the Continent field is 'Central America', if the Country is 'Costa Rica' the the Continent field is 'South America'"
     f"If no Country is mentioned then infer it from the Province, County or Locality Description"
     
     f"If Latitude and Longitude are not mentioned in the text then infer them from the Country, Province, County and Locality Description"
@@ -305,6 +305,7 @@ for index, row in df_to_transcribe.iloc[0:].iterrows():
         if response_code != 200:
             # NOT 200
             print(f"======= 200 not returned {response_code}. Trying request again number: {i} ===========================")
+            time.sleep(0.5)
         else:
             # YES 200
             json_returned = clean_up_ocr_output_json_content(ocr_output)
