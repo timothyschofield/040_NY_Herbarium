@@ -271,7 +271,10 @@ for index, row in df_to_transcribe.iloc[0:].iterrows():
         # JPGs in local folder
         filename = image_path.split("/")[-1]
         image_path = Path(f"{input_jpg_folder}/{filename}")
-
+        if image_path.is_file() == False:
+            print(f"File {image_path} does not exist")
+            exit()
+            
     print(f"\n########################## OCR OUTPUT {image_path} ##########################")
     print(f"count: {count}")
     
