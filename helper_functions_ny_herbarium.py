@@ -118,6 +118,8 @@ def create_and_save_dataframe(output_list, key_list_with_logging, output_path_na
 def save_dataframe_to_csv(df_to_save, output_path):
   
    # Char \u2032 ′ 8242 (the minutes of arc symbol) causes problems saving in Windows - so replace
+   # Also \u011f ğ 
+  
   df_to_save.replace({"′": "'"}, regex=True, inplace=True)
   
   with open(f"{output_path}.csv", "w") as f:
@@ -163,3 +165,39 @@ import base64
 def encode_image(image_path):
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8') 
+
+
+import requests
+def download_all_jpgs():
+
+    input_folder = "ny_herbarium_input"
+    input_file = "NY_specimens_to_transcribe.csv"
+    input_path = Path(f"{input_folder}/{input_file}")
+    df_input_csv = pd.read_csv(input_path)
+
+    input_url_list = df_input_csv["DarImageURL"]
+    # print(input_url_list)
+
+    output_folder = "jpg_folder_input"
+    count = 1
+    for url in input_url_list:
+
+        url_list = url.split("/")
+        filename = url_list[-1]
+        print(f"{count}: {filename}")
+        count = count + 1
+        
+        res = requests.get(url)
+
+        # print(type(res)) # requests.models.Response
+        # print(res.url)
+        # print(res.status_code)
+
+        output_path = Path(f"{output_folder}/{filename}")
+
+        if res.status_code == 200:
+            with open(output_path,'wb') as f:
+                print(f"Writing: {output_path}")
+                f.write(res.content)
+        else:
+            print("200 not returned")
