@@ -122,7 +122,7 @@ output_folder = "ny_herbarium_output"
 
 project_name = "ny_herbarium_improvement"
 
-batch_size = 2 # saves every
+batch_size = 1 # saves every
 time_stamp = get_file_timestamp()
 
 # This is just blank exept for the columns already filled in like irn and DarImageURL

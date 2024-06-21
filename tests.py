@@ -2,8 +2,17 @@ import requests
 from pathlib import Path
 import pandas as pd
 
+"""
+try:
+  print(x)
+except NameError:
+  print("Variable x is not defined")
+except:
+  print("Something else went wrong") 
 
-data = {"Name": ["T′m", "Nick", "K′ish", "Jack"],
+"""
+
+data = {"Name": ["T′m", "00°38", "K′ish", "Jack"],
         "Month": ["January", "Ma′ch", "July", "August"],
         "Place": ["Lan′aster", "Ca′d′n", "London", "P′ris"]
         }
@@ -11,16 +20,20 @@ data = {"Name": ["T′m", "Nick", "K′ish", "Jack"],
 df = pd.DataFrame(data)
 
 print(df)
+
+with open(f"test_from_linux.csv", encoding="utf-8", mode="w") as f:
+  df.to_csv(f, index=False)
+
+
+
 print("------")
+exit()
 
 _data = "sh′56jkAS"
-
 data = list((c.encode("utf-8") for c in _data))
 print(data)
-
 data = _data.encode("utf-8")
 print(data)
-
 
 exit()
 

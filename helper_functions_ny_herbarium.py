@@ -107,23 +107,15 @@ def create_and_save_dataframe(output_list, key_list_with_logging, output_path_na
   if key_list_with_logging != []:
     output_df = output_df[key_list_with_logging]  # Bring reorder dataframe to bring source url and error column to the front
 
-  # Char \u2032 ′ 8242 (the minutes of arc symbol) causes problems saving in Windows - so replace
-  output_df.replace({"′": "'"}, regex=True, inplace=True)
-
   output_path = Path(output_path_name)
-  with open(output_path, "w") as f:
-    output_df.to_csv(f, index=False, encoding="utf-8", sep=",")
+  with open(output_path, encoding="utf-8", mode="w") as f:
+    output_df.to_csv(f, index=False)
     
 
 def save_dataframe_to_csv(df_to_save, output_path):
   
-   # Char \u2032 ′ 8242 (the minutes of arc symbol) causes problems saving in Windows - so replace
-   # Also \u011f ğ 
-  
-  df_to_save.replace({"′": "'"}, regex=True, inplace=True)
-  
-  with open(f"{output_path}.csv", "w") as f:
-    df_to_save.to_csv(f, index=False, encoding="utf-8", sep=",")
+  with open(f"{output_path}.csv", encoding="utf-8", mode="w") as f:
+    df_to_save.to_csv(f, index=False)
 
       
 # source_type "url" or "local"

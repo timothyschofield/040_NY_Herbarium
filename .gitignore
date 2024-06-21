@@ -4,3 +4,4 @@ back/
 jpg_folder_input/
 ny_herbarium_output/*.csv
 .env
+tests.py
