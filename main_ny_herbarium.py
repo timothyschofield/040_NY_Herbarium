@@ -86,7 +86,6 @@ OcrText
 import openai
 from openai import OpenAI
 from dotenv import load_dotenv
-
 from helper_functions_ny_herbarium import get_file_timestamp, is_json, make_payload, clean_up_ocr_output_json_content, are_keys_valid, get_headers, save_dataframe_to_csv
 
 import requests
@@ -258,7 +257,7 @@ prompt = (
 
 headers = get_headers(my_api_key)
 
-source_type="local" # "url" or "local"
+source_type="url" # "url" or "local"
 print("####################################### START OUTPUT ######################################")
 for index, row in df_to_transcribe.iloc[0:].iterrows():  
 
