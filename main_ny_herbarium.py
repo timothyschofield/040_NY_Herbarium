@@ -129,7 +129,6 @@ df_input_csv = pd.read_csv(input_path)
 
 # This would all be fine except that a DarImageURL column can contain multiple image urls in one line seperated a pipes ("|")
 # So its easiest just to get it out of the way and make a df copy with each url having its own line - the new df will have more lines obviously
-
 to_transcribe_list = []
 for index, row in df_input_csv.iterrows():
 
@@ -153,15 +152,6 @@ df_to_transcribe["MyOcrText"] = "No OCR text"
 # Necessary because by copying rows to give each url a seperate row, we have also copied indexes
 # We want each row to have its own index - so reset_index
 df_to_transcribe.reset_index(drop=True, inplace=True)
-
-
-print(f"WRITING")
-project_name = "DUEL_SOURCE_TEST"
-output_path = f"{output_folder}/{project_name}_{time_stamp}"
-save_dataframe_to_csv(df_to_save=df_to_transcribe, output_path=output_path)
-
-
-exit()
 
 
 # These are the columns that ChatGPT will try to fill from the OCR
