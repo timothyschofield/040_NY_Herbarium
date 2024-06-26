@@ -12,6 +12,7 @@ except:
 
 """
 
+
 data = {"Name": ["T′m", "00°38", "K′ish", "Jack"],
         "Month": ["January", "Ma′ch", "July", "August"],
         "Place": ["Lan′aster", "Ca′d′n", "London", "P′ris"]
