@@ -95,7 +95,7 @@ for index, row in df_output_csv.iloc[0:].iterrows():
         month =  str(date_list[1])
         day =  str(date_list[2])
         
-    new_str = f"collectionDD = '{day}', collectionMM = '{month}', collectionYYYY = '{year}',{eol}"
+    new_str = f"collectionDD = '{day}', collectionMM = '{month}', collectionYYYY = '{year}', AI_collectionDD = '{day}', AI_collectionMM = '{month}', AI_collectionYYYY = '{year}',{eol}"
     sql = f"{sql}{new_str}"
     
     val = row["ColDateVisitedTo"]
@@ -109,8 +109,18 @@ for index, row in df_output_csv.iloc[0:].iterrows():
         month =  str(date_list[1])
         day =  str(date_list[2])
         
-    new_str = f"collectionDD2 = '{day}', collectionMM2 = '{month}', collectionYYYY2 = '{year}',{eol}"
+    new_str = f"collectionDD2 = '{day}', collectionMM2 = '{month}', collectionYYYY2 = '{year}', AI_collectionDD2 = '{day}', AI_collectionMM2 = '{month}', AI_collectionYYYY2 = '{year}',{eol}"
     sql = f"{sql}{new_str}"     
+      
+      
+    val = row["ColVerbatimDate"]
+    new_str = f"colVerbatimDate = '{val}', AI_colVerbatimDate = '{val}',{eol}"
+    sql = f"{sql}{new_str}"     
+      
+      
+    
+      
+      
       
       
       

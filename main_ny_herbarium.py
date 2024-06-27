@@ -112,16 +112,16 @@ except Exception as ex:
 
 
 input_folder = "ny_herbarium_input"
-input_file = "NY_specimens_to_transcribe.csv"
+input_file = "NY_specimens_transcribed.csv"
 input_path = Path(f"{input_folder}/{input_file}")
 
 input_jpg_folder = "jpg_folder_input"
 
 output_folder = "ny_herbarium_output"
 
-project_name = "ny_herbarium_improvement"
+project_name = "ny_herbarium_transcribed"
 
-batch_size = 1 # saves every
+batch_size = 20 # saves every
 time_stamp = get_file_timestamp()
 
 # This is just blank exept for the columns already filled in like irn and DarImageURL
