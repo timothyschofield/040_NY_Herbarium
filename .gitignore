@@ -2,9 +2,10 @@
 _00_NY_Herberium_Notes/
 back/
 jpg_folder_input/
+ny_analysis_input/
+ny_analysis_output/
 ny_csv_to_sql_input/
 ny_csv_to_sql_output/
 ny_herbarium_input/
 ny_herbarium_output/
 .env
-tests.py

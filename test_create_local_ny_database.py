@@ -1,7 +1,5 @@
 """
     Creates a local database for testing the sql
-
-
 """
 
 from mysql.connector import connect, Error
@@ -22,7 +20,7 @@ try:
             for db in cursor:
                 print(db)
 
-        use_db_query = "USE ny_herbarium" 
+        use_db_query = "USE ny_herbarium"
         with connection.cursor() as cursor:
             cursor.execute(use_db_query)  
 
@@ -42,23 +40,28 @@ try:
                                     collectionNumberSuffix VARCHAR(255),
                                     AI_collectionNumberSuffix VARCHAR(255),
                                     collectionNumberText VARCHAR(255),
-                                    AI_collectionNumberText VARCHAR(255)
+                                    AI_collectionNumberText VARCHAR(2),
+                                    collectionDD VARCHAR(2),
+                                    collectionMM VARCHAR(2),
+                                    collectionYYYY VARCHAR(4),
+                                    AI_collectionDD VARCHAR(2),
+                                    AI_collectionMM VARCHAR(2),
+                                    AI_collectionYYYY VARCHAR(4),    
+                                    collectionDD2 VARCHAR(2),
+                                    collectionMM2 VARCHAR(2),
+                                    collectionYYYY2 VARCHAR(4),
+                                    AI_collectionDD2 VARCHAR(2),
+                                    AI_collectionMM2 VARCHAR(2),
+                                    AI_collectionYYYY2 VARCHAR(4),                                  
+                                    colVerbatimDate VARCHAR(255),
+                                    AI_colVerbatimDate VARCHAR(255)
+                            
                                     )
                                     """
 
         with connection.cursor() as cursor:
             cursor.execute(specimenCards)
             connection.commit()
-
-
-
-
-
-
-
-
-
-
 
 except Error as e:
     print(f"TIM ERROR: {e}")

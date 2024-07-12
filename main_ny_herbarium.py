@@ -153,6 +153,12 @@ df_to_transcribe["MyOcrText"] = "No OCR text"
 # We want each row to have its own index - so reset_index
 df_to_transcribe.reset_index(drop=True, inplace=True)
 
+"""
+output_path = f"{output_folder}/NY_transcribed_{time_stamp}-1062"
+save_dataframe_to_csv(df_to_save=df_to_transcribe, output_path=output_path)
+exit()
+"""
+
 
 # These are the columns that ChatGPT will try to fill from the OCR
 ocr_column_names = [ 
