@@ -22,7 +22,7 @@ try:
             for db in cursor:
                 print(db)
 
-        use_db_query = "USE ny_herbarium"
+        use_db_query = "USE ny_herbarium" 
         with connection.cursor() as cursor:
             cursor.execute(use_db_query)  
 
