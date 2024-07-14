@@ -27,8 +27,6 @@
     SET darCollector = 'G. T. Johnson', AI_darCollector = 'G. T. Johnson'
     WHERE darCatalogNumber = 4285750; 
 
-
-
 """
 
 from dotenv import load_dotenv
@@ -49,7 +47,7 @@ from sqlescapy import sqlescape
 print(f"Python version {sys.version}")
 """
 This is specificaly for this database, its impossible to be totaly general
-pip install sqlescapy
+
 """
 
 # Collect all the values from the CSV and turn them into 
@@ -78,7 +76,7 @@ def get_sql_vals_from_csv(row):
     this_db_cols["darKingdom"][1] = csv2sql_val(row["DarKingdom"], this_db_cols["darKingdom"]) 
     this_db_cols["darPhylum"][1] = csv2sql_val(row["DarPhylum"], this_db_cols["darPhylum"]) 
     this_db_cols["darFamily"][1] = csv2sql_val(row["DarFamily"], this_db_cols["darFamily"]) 
-    this_db_cols["darScientificName"][1] = csv2sql_val(row["DarScientificName"], this_db_cols["darScientificName"]) 
+    this_db_cols["darScientificName"][1] = csv2sql_val(row["DarScientificName"], this_db_cols["darScientificName"])
     
     csv_val = row["ColDateVisitedFrom"]
     if type(csv_val) == str: date_list = csv_val.split("-")
@@ -95,7 +93,10 @@ def get_sql_vals_from_csv(row):
     
     return this_db_cols
 
-
+"""
+    INSERT INTO ny_herbarium.specimenCards (darCollector, AI_darCollector)
+    VALUES ('G. T. Johnson', 'G. T. Johnson');
+"""
 def INSERT_sql_line(ny_db_cols):
     
     db_keys = ny_db_cols.keys()
@@ -109,26 +110,38 @@ def INSERT_sql_line(ny_db_cols):
           db_col_val_str = f"{db_col_val_str}{str(db_col_val)}, "  
     
     db_col_val_str = db_col_val_str.replace("None", "NULL") # Not happy with this
-    db_col_val_str = db_col_val_str[:-2]
+    db_col_val_str = db_col_val_str[:-2] # Get rid of final comma
     
     sql = f"INSERT INTO specimenCards ({db_col_names}) \nVALUES ({db_col_val_str});"
-    #print("-------")
-    #print(sql)
-    
-    import re
-
-    #xxx = re.escape("sggsdgs Fu'ngi 656")
-    #print(xxx)
-    
-    #exit()
-
 
     return sql
 
 """
+    UPDATE specimenCards 
+    SET darCollector = 'G. T. Johnson', AI_darCollector = 'G. T. Johnson'
+    WHERE darCatalogNumber = 4285750; 
 """
+def UPDATE_sql_line(ny_db_cols):
+    
+    sql = f""
+    for db_col_name, (db_col_type, db_col_val) in ny_db_cols.items():
+        if db_col_name != "darCatalogNumber":
+            if type(db_col_val) == str:
+                db_col_val_str = f"'{db_col_val}'" 
+            else:
+                db_col_val_str = f"{str(db_col_val)}" 
+            
+            sql = f"{sql}{db_col_name} = {db_col_val_str}, "
 
+    sql = sql.replace("None", "NULL") # Not happy with this
+    sql = sql[:-2] # Get rid of final comma
 
+    sql = f"UPDATE specimenCards \nSET {sql} \nWHERE darCatalogNumber = {ny_db_cols['darCatalogNumber'][1]};"
+    
+    return sql
+
+"""
+"""
 time_stamp = get_file_timestamp()
 
 input_folder = "ny_csv_to_sql_input"
@@ -166,7 +179,9 @@ try:
         for index, row in df_output_csv.iloc[0:].iterrows(): 
             
             sql_vals = get_sql_vals_from_csv(row)
-            sql_line = INSERT_sql_line(sql_vals)
+            #sql_line = INSERT_sql_line(sql_vals)
+            sql_line = UPDATE_sql_line(sql_vals)
+            
             
             # print(sql_line)
 
