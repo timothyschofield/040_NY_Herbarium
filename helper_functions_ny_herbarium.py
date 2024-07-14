@@ -11,14 +11,12 @@ def csv2sql_val(csv_val, sql_col):
 
     if db_col_type == "VARCHAR" or db_col_type == "CHAR":   
       if csv_val != None:
-        csv_val = f"'{csv_val}'" # Its a string so surround it with quotes
+        csv_val = f'{csv_val}' # Its a string so surround it with quotes
         
-    print(f"****{csv_val}****")
+    # print(f"****{csv_val}****")
     return csv_val
-
-
-
-
+  
+# eo csv2sql_val
 
 def get_headers(api_key):
   
