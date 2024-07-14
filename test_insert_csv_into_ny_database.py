@@ -44,10 +44,12 @@ import sys
 
 from test_ny_cols import ny_db_cols
 
+from sqlescapy import sqlescape
+
 print(f"Python version {sys.version}")
 """
 This is specificaly for this database, its impossible to be totaly general
-
+pip install sqlescapy
 """
 
 # Collect all the values from the CSV and turn them into 
@@ -112,6 +114,14 @@ def INSERT_sql_line(ny_db_cols):
     sql = f"INSERT INTO specimenCards ({db_col_names}) \nVALUES ({db_col_val_str});"
     #print("-------")
     #print(sql)
+    
+    import re
+
+    #xxx = re.escape("sggsdgs Fu'ngi 656")
+    #print(xxx)
+    
+    #exit()
+
 
     return sql
 
