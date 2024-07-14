@@ -29,7 +29,7 @@ ai_input_file = "ny_ai_herbarium_transcribed_2024-06-26_ALL_1060.csv"
 ai_input_path = Path(f"{ai_input_folder}/{ai_input_file}")
 
 output_folder = "ny_analysis_output"
-
+ 
 if os.path.exists(ny_input_path) != True:
     print(f"ERROR: {ny_input_path} file does not exits")
     exit()

@@ -19,7 +19,7 @@ CollectionNumber	    (e.g. 456)
 CollectionNumberSuffix	(e.g. XV)
 CollectionNumberText	(e.g. BN-456-XV) i.e. verbatim
 
-
+ 
 ColDateVisitedFrom	    (e.g. 1891-01-) (e.g. 2002-11-19)
 ColDateVisitedTo	    (e.g. 1891-01-) (e.g. 2002-11-19)
 ColVerbatimDate	        (e.g. Jan 1891) (e.g. 19 Nov 1990)

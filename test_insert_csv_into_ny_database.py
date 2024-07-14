@@ -12,7 +12,7 @@
 """
 
 from dotenv import load_dotenv
-from helper_functions_ny_herbarium import get_file_timestamp, save_dataframe_to_csv
+from helper_functions_ny_herbarium import get_file_timestamp, save_dataframe_to_csv, csv2sql_val
 
 import os
 from pathlib import Path 
@@ -21,10 +21,54 @@ import time
 from datetime import datetime
 import json
 import sys
+
+from test_ny_cols import ny_db_cols
+
 print(f"Python version {sys.version}")
+"""
+This is specificaly for this database, its impossible to be totaly general
+
+"""
+
+# Collect all the values from the CSV and turn them into 
+# The correct form - string, number, None (NULL) for SQL
+def get_values_from_csv(row):
+    
+    # A Dict db_col_name: (db_col_type, col_value)
+    this_db_cols = ny_db_cols.copy()
+
+    this_db_cols["irn"][1] = csv2sql_val(row["irn"], this_db_cols["irn"])
+    
+    this_db_cols["darGlobalUniqueIdentifier"][1] = csv2sql_val(row["DarGlobalUniqueIdentifier"], this_db_cols["darGlobalUniqueIdentifier"])    
+        
+    this_db_cols["darInstitutionCode"][1] = csv2sql_val(row["DarInstitutionCode"], this_db_cols["darInstitutionCode"])     
+        
+    this_db_cols["darCatalogNumber"][1] = csv2sql_val(row["DarCatalogNumber"], this_db_cols["darCatalogNumber"])  
+    
+    csv_val = row["ColDateVisitedFrom"]
+    if type(csv_val) == str: date_list = csv_val.split("-")
+    else: date_list = []
+    
+    if len(date_list) != 3:
+        this_db_cols["collectionYYYY"][1] = None
+        this_db_cols["collectionMM"][1] = None
+        this_db_cols["collectionDD"][1] = None
+    else:
+        this_db_cols["collectionYYYY"][1] = f"'{str(date_list[0])}'"
+        this_db_cols["collectionMM"][1] =  f"'{str(date_list[1])}'"
+        this_db_cols["collectionDD"][1] =  f"'{str(date_list[2])}'"   
+    
+    print(this_db_cols["collectionYYYY"][1])
+    print(this_db_cols["collectionMM"][1])
+    print(this_db_cols["collectionDD"][1])
+    exit()
+        
 
 
-def make_sql_line(row):
+
+
+
+def make_UPDATE_sql_line(row):
     eol = f"\n"
     
     sql = f"UPDATE specimenCards SET "
@@ -108,13 +152,17 @@ def make_sql_line(row):
 
     return sql
 
-
+ 
 
 """
-Remember - the records will already exist becuse of the irn, url and darCatalogNumber inherited from NY
-So we are starting with a preexisting database table that is partialy instanciated in some columns that will never change
-and has many empty columns that need updating from a CSV
+1) CREATE the specimenCards with irn, darCatalogNumber, urls, etc. columns which are not edited, 
+    as well as darCollector, AI_darCollector, collectionTeam, AI_collectionTeam, etc. 
+    This is done ONCE
 
+2) INSERT the values for all columns from the CSV. Duplicate values form darCollector to AI_darCollector, etc.
+    This is done ONCE
+    
+3) UPDATE - which columns are updated? and when is dependednt of Max work flow.
 
 # works from within Workbench
 # For creating a new record
@@ -124,14 +172,14 @@ VALUES ('G. T. Johnson', 'G. T. Johnson');
 # For updateing existing record
 UPDATE specimenCards 
 SET darCollector = 'G. T. Johnson', AI_darCollector = 'G. T. Johnson'
-WHERE darCatalogNumber = 4285750;
+WHERE darCatalogNumber = 4285750; 
 """
 
 
 time_stamp = get_file_timestamp()
 
 input_folder = "ny_csv_to_sql_input"
-input_file = "ny_hebarium_improvement_2024-06-15T23-40-20-1001-ALL.csv"
+input_file = "ny_hebarium_improvement_test.csv"
 input_path = Path(f"{input_folder}/{input_file}")
 
 if os.path.exists(input_path) != True:
@@ -164,14 +212,16 @@ try:
 
         for index, row in df_output_csv.iloc[0:].iterrows(): 
             
-            sql = make_sql_line(row)
+            sql = get_values_from_csv(row)
 
             df_output_csv.loc[index, "SQL"] = sql
             
+            """
             with connection.cursor() as cursor:
                 cursor.execute(sql) 
                 connection.commit()
-                
+            """
+             
             if index > 10: break
 
 

@@ -1,3 +1,24 @@
+import pandas as pd
+
+# Takes input from a csv column and makes it appropriate for sql
+# May return None, int, float or str
+def csv2sql_val(csv_val, sql_col):
+  
+    if type(csv_val) == float:
+        if pd.isna(csv_val): csv_val = None # Python dosn't have NULL
+        
+    db_col_type = sql_col[0].split("(")[0]
+
+    if db_col_type == "VARCHAR" or db_col_type == "CHAR":   
+      if csv_val != None:
+        csv_val = f"'{csv_val}'" # Its a string so surround it with quotes
+        
+    print(f"****{csv_val}****")
+    return csv_val
+
+
+
+
 
 def get_headers(api_key):
   
@@ -8,7 +29,7 @@ def get_headers(api_key):
   
   return headers
 
-
+ 
 # Sometimes ChatGPT returns invalid keys in the JSON
 # The json_returned must be valid JSON
 def are_keys_valid(json_returned, prompt_key_names):
@@ -99,7 +120,7 @@ def get_torch_cuda_info():
       print('__CUDA Device Total Memory [GB]:',torch.cuda.get_device_properties(0).total_memory/1e9)
       print("-----------------------")
 
-import pandas as pd
+
 from pathlib import Path
 def create_and_save_dataframe(output_list, key_list_with_logging, output_path_name):
   output_df = pd.DataFrame(output_list)
