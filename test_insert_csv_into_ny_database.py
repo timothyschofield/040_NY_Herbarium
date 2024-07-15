@@ -51,7 +51,7 @@ This is specificaly for this database, its impossible to be totaly general
 """
 
 # Collect all the values from the CSV and turn them into 
-# The correct form - string, number, None (NULL) for SQL
+# The correct form - string (surrounded with quotes), number, None (NULL) for SQL
 def get_sql_vals_from_csv(row):
     
     # A Dict db_col_name: (db_col_type, col_value)
@@ -96,30 +96,68 @@ def get_sql_vals_from_csv(row):
 """
     INSERT INTO ny_herbarium.specimenCards (darCollector, AI_darCollector)
     VALUES ('G. T. Johnson', 'G. T. Johnson');
+    
+    sql = "INSERT INTO editorial (name, email) VALUES (%s, %s)"
+    val = ("NAME", "EMAIL")
+    mycursor.execute(sql, val)
+    mydb.commit()
+    
+    None will be converted to NULL, any other value will be quoted as neccesary. 
 """
 def INSERT_sql_line(ny_db_cols):
     
     db_keys = ny_db_cols.keys()
     db_col_names = ", ".join(db_keys)
     
-    db_col_val_str = f""
+    # db_col_val_str = f""
+    db_col_val_list = []
+    percent_str = f""
     for db_col_name, (db_col_type, db_col_val) in ny_db_cols.items():
+        db_col_val_list.append(db_col_val)
+        
+        """
         if type(db_col_val) == str:
-          db_col_val_str = f"{db_col_val_str}'{db_col_val}', " 
+            db_col_val_str = f"{db_col_val_str}'{db_col_val}', " 
         else:
-          db_col_val_str = f"{db_col_val_str}{str(db_col_val)}, "  
-    
-    db_col_val_str = db_col_val_str.replace("None", "NULL") # Not happy with this
-    db_col_val_str = db_col_val_str[:-2] # Get rid of final comma
-    
-    sql = f"INSERT INTO specimenCards ({db_col_names}) \nVALUES ({db_col_val_str});"
+            db_col_val_str = f"{db_col_val_str}{str(db_col_val)}, "  
+        """
+        
+        # Must handle INTERGER, FLOAT, VARCHAR, CHAR, LONGTEXT
+        db_col_type = db_col_type.split("(")[0]
+        percent_str = f"{percent_str}%s, "
+        
+    percent_str = f"{percent_str[:-2]}"
 
-    return sql
+    #db_col_val_str = db_col_val_str.replace("None", "NULL") # Not happy with this
+    #db_col_val_str = db_col_val_str[:-2] # Get rid of final comma
+    
+    #sql = f"INSERT INTO specimenCards ({db_col_names}) \nVALUES ({db_col_val_str});"
+    sql = f"INSERT INTO specimenCards ({db_col_names}) VALUES ({percent_str})"
+    
+
+    #db_col_val_str = f"({db_col_val_str})"
+    print(sql)
+    print(db_col_val_list)
+
+    return (sql,db_col_val_list)
 
 """
     UPDATE specimenCards 
     SET darCollector = 'G. T. Johnson', AI_darCollector = 'G. T. Johnson'
     WHERE darCatalogNumber = 4285750; 
+    
+    There is a problem here because Frank uses darCatalogNumber as a unique identifier.
+    In the source CSV from NY each line has a unique darCatalogNumber. 
+    But some lines contain multiple images in the darImageURL column, seperated by a pipe character ("|").
+    These lines are broken out before the OCR is done into seperate lines, so that each line has one image. 
+    This means these lines share a common darCatalogNumber. 
+    The result will be that on UPDATE all these lines will have the same infomation copied to them
+    when in the the OCR may have been different.
+    
+    The way around this is to use the image file name as a unique identifier.
+    OR
+    Something awful like, keep all the URLs in the samed arImageURL cell (done brake them out to seperate lines) and only OCR the first one.
+    
 """
 def UPDATE_sql_line(ny_db_cols):
     
@@ -179,23 +217,19 @@ try:
         for index, row in df_output_csv.iloc[0:].iterrows(): 
             
             sql_vals = get_sql_vals_from_csv(row)
-            #sql_line = INSERT_sql_line(sql_vals)
-            sql_line = UPDATE_sql_line(sql_vals)
-            
+            sql, vals = INSERT_sql_line(sql_vals)
+            #sql_line = UPDATE_sql_line(sql_vals)
             
             # print(sql_line)
-
-            #df_output_csv.loc[index, "SQL"] = sql
-            
+            # df_output_csv.loc[index, "SQL"] = sql
             # Need to escape 'Carex fuscula d'Urv.'
-            
-            
-            print(sql_line)
+            #print(sql_line)
          
             with connection.cursor() as cursor:
-                cursor.execute(sql_line) 
+                cursor.execute(sql, vals) 
                 connection.commit()
             
+        
         #print(f"WRITING: {output_path}")
         #save_dataframe_to_csv(df_to_save=df_output_csv, output_path=output_path)
 
