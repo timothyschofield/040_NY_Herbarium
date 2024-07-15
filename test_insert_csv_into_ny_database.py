@@ -94,52 +94,34 @@ def get_sql_vals_from_csv(row):
     return this_db_cols
 
 """
-    INSERT INTO ny_herbarium.specimenCards (darCollector, AI_darCollector)
-    VALUES ('G. T. Johnson', 'G. T. Johnson');
-    
+
     sql = "INSERT INTO editorial (name, email) VALUES (%s, %s)"
     val = ("NAME", "EMAIL")
     mycursor.execute(sql, val)
     mydb.commit()
     
     None will be converted to NULL, any other value will be quoted as neccesary. 
+    
 """
 def INSERT_sql_line(ny_db_cols):
     
     db_keys = ny_db_cols.keys()
     db_col_names = ", ".join(db_keys)
     
-    # db_col_val_str = f""
     db_col_val_list = []
     percent_str = f""
     for db_col_name, (db_col_type, db_col_val) in ny_db_cols.items():
         db_col_val_list.append(db_col_val)
-        
-        """
-        if type(db_col_val) == str:
-            db_col_val_str = f"{db_col_val_str}'{db_col_val}', " 
-        else:
-            db_col_val_str = f"{db_col_val_str}{str(db_col_val)}, "  
-        """
-        
-        # Must handle INTERGER, FLOAT, VARCHAR, CHAR, LONGTEXT
-        db_col_type = db_col_type.split("(")[0]
         percent_str = f"{percent_str}%s, "
         
-    percent_str = f"{percent_str[:-2]}"
+    percent_str = f"{percent_str[:-2]}" # Get rid of final comma
 
-    #db_col_val_str = db_col_val_str.replace("None", "NULL") # Not happy with this
-    #db_col_val_str = db_col_val_str[:-2] # Get rid of final comma
-    
-    #sql = f"INSERT INTO specimenCards ({db_col_names}) \nVALUES ({db_col_val_str});"
     sql = f"INSERT INTO specimenCards ({db_col_names}) VALUES ({percent_str})"
     
-
-    #db_col_val_str = f"({db_col_val_str})"
     print(sql)
     print(db_col_val_list)
 
-    return (sql,db_col_val_list)
+    return (sql, db_col_val_list)
 
 """
     UPDATE specimenCards 
@@ -161,22 +143,20 @@ def INSERT_sql_line(ny_db_cols):
 """
 def UPDATE_sql_line(ny_db_cols):
     
-    sql = f""
+    db_col_val_list = []
+    assign_str = f""
     for db_col_name, (db_col_type, db_col_val) in ny_db_cols.items():
         if db_col_name != "darCatalogNumber":
-            if type(db_col_val) == str:
-                db_col_val_str = f"'{db_col_val}'" 
-            else:
-                db_col_val_str = f"{str(db_col_val)}" 
+            db_col_val_list.append(db_col_val)
+            assign_str = f"{assign_str} {db_col_name} = %s, "
             
-            sql = f"{sql}{db_col_name} = {db_col_val_str}, "
-
-    sql = sql.replace("None", "NULL") # Not happy with this
-    sql = sql[:-2] # Get rid of final comma
-
-    sql = f"UPDATE specimenCards \nSET {sql} \nWHERE darCatalogNumber = {ny_db_cols['darCatalogNumber'][1]};"
+    assign_str = f"{assign_str[:-2]}" # Get rid of final comma            
+                     
+    sql = f"UPDATE specimenCards \nSET {assign_str} \nWHERE darCatalogNumber = {ny_db_cols['darCatalogNumber'][1]};"
     
-    return sql
+    #print(sql)
+    #print(db_col_val_list)
+    return (sql, db_col_val_list)
 
 """
 """
@@ -217,8 +197,8 @@ try:
         for index, row in df_output_csv.iloc[0:].iterrows(): 
             
             sql_vals = get_sql_vals_from_csv(row)
-            sql, vals = INSERT_sql_line(sql_vals)
-            #sql_line = UPDATE_sql_line(sql_vals)
+            # sql, vals = INSERT_sql_line(sql_vals)
+            sql, vals = UPDATE_sql_line(sql_vals)
             
             # print(sql_line)
             # df_output_csv.loc[index, "SQL"] = sql
