@@ -119,7 +119,7 @@ input_jpg_folder = "jpg_folder_input"
 
 output_folder = "ny_herbarium_output"
 
-project_name = "ny_herbarium_transcribed"
+project_name = "ny_herbarium_transcribed" 
 
 batch_size = 20 # saves every
 time_stamp = get_file_timestamp()
