@@ -17,16 +17,6 @@
         
     3) UPDATE - which columns are updated? and when is dependednt of Max work flow.
 
-    # works from within Workbench
-    # For creating a new record
-    INSERT INTO ny_herbarium.specimenCards (darCollector, AI_darCollector)
-    VALUES ('G. T. Johnson', 'G. T. Johnson');
-
-    # For updateing existing record
-    UPDATE specimenCards 
-    SET darCollector = 'G. T. Johnson', AI_darCollector = 'G. T. Johnson'
-    WHERE darCatalogNumber = 4285750; 
-
 """
 
 from dotenv import load_dotenv
@@ -78,9 +68,9 @@ def get_sql_vals_from_csv(row):
     this_db_cols["darFamily"][1] = csv2sql_val(row["DarFamily"], this_db_cols["darFamily"]) 
     this_db_cols["darScientificName"][1] = csv2sql_val(row["DarScientificName"], this_db_cols["darScientificName"])
     
+    date_list = []
     csv_val = row["ColDateVisitedFrom"]
     if type(csv_val) == str: date_list = csv_val.split("-")
-    else: date_list = []
     
     if len(date_list) != 3:
         this_db_cols["collectionYYYY"][1] = None
@@ -95,8 +85,8 @@ def get_sql_vals_from_csv(row):
 
 """
 
-    sql = "INSERT INTO editorial (name, email) VALUES (%s, %s)"
-    val = ("NAME", "EMAIL")
+    sql = "INSERT INTO editorial (name, email) VALUES (%s, %s);"
+    val = ["NAME", "EMAIL"]
     mycursor.execute(sql, val)
     mydb.commit()
     
@@ -116,7 +106,7 @@ def INSERT_sql_line(ny_db_cols):
         
     percent_str = f"{percent_str[:-2]}" # Get rid of final comma
 
-    sql = f"INSERT INTO specimenCards ({db_col_names}) VALUES ({percent_str})"
+    sql = f"INSERT INTO specimenCards ({db_col_names}) VALUES ({percent_str});"
     
     print(sql)
     print(db_col_val_list)
@@ -124,9 +114,13 @@ def INSERT_sql_line(ny_db_cols):
     return (sql, db_col_val_list)
 
 """
-    UPDATE specimenCards 
-    SET darCollector = 'G. T. Johnson', AI_darCollector = 'G. T. Johnson'
-    WHERE darCatalogNumber = 4285750; 
+    sql =  "UPDATE specimenCards 
+            SET darCollector = %s, AI_darCollector = %s
+            WHERE darCatalogNumber = 4285750;"
+    
+    val = ['G. T. Johnson', 'G. T. Johnson']
+    mycursor.execute(sql, val)
+    mydb.commit()
     
     There is a problem here because Frank uses darCatalogNumber as a unique identifier.
     In the source CSV from NY each line has a unique darCatalogNumber. 
@@ -138,7 +132,7 @@ def INSERT_sql_line(ny_db_cols):
     
     The way around this is to use the image file name as a unique identifier.
     OR
-    Something awful like, keep all the URLs in the samed arImageURL cell (done brake them out to seperate lines) and only OCR the first one.
+    Something awful like, keep all the URLs in the same darImageURL cell (dont brake them out to seperate lines) and only OCR the first one.
     
 """
 def UPDATE_sql_line(ny_db_cols):
