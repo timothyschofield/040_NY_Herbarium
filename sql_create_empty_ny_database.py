@@ -109,7 +109,7 @@ Creates the database
 
 from mysql.connector import connect, Error
 
-from test_ny_cols import ny_db_cols
+from sql_ny_cols import ny_db_cols
 
 try:
 

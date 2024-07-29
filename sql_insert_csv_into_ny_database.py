@@ -30,7 +30,7 @@ from datetime import datetime
 import json
 import sys
 
-from test_ny_cols import ny_db_cols
+from sql_ny_cols import ny_db_cols
 
 from sqlescapy import sqlescape
 

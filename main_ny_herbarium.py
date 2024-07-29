@@ -159,7 +159,6 @@ save_dataframe_to_csv(df_to_save=df_to_transcribe, output_path=output_path)
 exit()
 """
 
-
 # These are the columns that ChatGPT will try to fill from the OCR
 ocr_column_names = [ 
         ("DarCollector","Collector Name"), 
