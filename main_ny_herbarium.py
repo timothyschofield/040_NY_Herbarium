@@ -200,6 +200,7 @@ ocr_column_names = [
         ("SpeOtherSpecimenNumbers_tab","SpeOtherSpecimenNumbers_tab"), 
         ("MyOcrText", "OCR Text")]
 
+# ocr_column_names = [("DarCollector","Collector Name")]
 
 df_column_names = []          # To make the DataFrame with
 prompt_key_names = []         # To use in the prompt for ChatGPT
@@ -260,12 +261,21 @@ prompt = (
     f"If you can not find a value for a key return value 'none'"
 )
 
+"""
+prompt = (
+    f"Read this herbarium sheet and extract all the text you can"
+    f"Go through the text you have extracted and return data in JSON format with {keys_concatenated} as keys"
+    f"Use exactly {keys_concatenated} as keys"
+    f"Do not return any other data or keys in the JSON"
+    f"If you can not find a value for a key return value 'none'"
+)
+"""
 
 headers = get_headers(my_api_key)
 
 source_type="url" # "url" or "local"
 print("####################################### START OUTPUT ######################################")
-for index, row in df_to_transcribe.iloc[0:].iterrows():  
+for index, row in df_to_transcribe.iloc[0:100].iterrows():  
 
     count = index + 1
     

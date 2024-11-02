@@ -1,4 +1,4 @@
-# A Dict db_column_name: (column_type, column_value)
+# A Dict db_column_name: [column_type, column_value]
 ny_db_cols = {
             'irn': ['INTEGER(10)', 0],
             
